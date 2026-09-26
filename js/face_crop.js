@@ -125,11 +125,9 @@ class FaceCropper {
   }
 
   /**
-   * Measure the actual physical crown (top of head/hair) and chin coordinates.
-   * If sourceCutout (transparent canvas with subject) is available, it analyzes
-   * alpha channel rows to detect the EXACT top-most hair pixel!
+   * Measure single face metrics
    */
-  measureTrueCrownAndChin(imgWidth, imgHeight, detection, sourceCutout = null) {
+  measureSingleFace(imgWidth, imgHeight, detection) {
     let faceCenterX = imgWidth / 2;
     let eyeCenterY = imgHeight * 0.38;
     let headWidth = imgWidth * 0.35;
@@ -184,55 +182,8 @@ class FaceCropper {
       }
     }
 
-    // Distance from eyes to chin
     const dEyeChin = Math.max(25, chinY - eyeCenterY);
-
-    // Default anatomical crown: human skull + hair volume is ~1.32x eye-to-chin distance
-    let crownY = Math.round(eyeCenterY - dEyeChin * 1.32);
-
-    // If sourceCutout (transparent canvas with subject) is provided, scan the actual alpha pixels!
-    if (sourceCutout && (sourceCutout.getContext || (sourceCutout.width && sourceCutout.height))) {
-      try {
-        let scanCanvas = sourceCutout;
-        if (!sourceCutout.getContext) {
-          scanCanvas = document.createElement('canvas');
-          scanCanvas.width = imgWidth;
-          scanCanvas.height = imgHeight;
-          const sCtx = scanCanvas.getContext('2d');
-          sCtx.drawImage(sourceCutout, 0, 0, imgWidth, imgHeight);
-        }
-
-        const sCtx = scanCanvas.getContext('2d');
-        const minX = Math.max(0, Math.floor(faceCenterX - headWidth * 0.70));
-        const maxX = Math.min(imgWidth - 1, Math.ceil(faceCenterX + headWidth * 0.70));
-        const scanWidth = maxX - minX + 1;
-        const scanHeight = Math.max(1, Math.min(imgHeight, Math.floor(eyeCenterY)));
-
-        if (scanWidth > 0 && scanHeight > 0) {
-          const imgData = sCtx.getImageData(minX, 0, scanWidth, scanHeight);
-          const data = imgData.data;
-
-          for (let y = 0; y < scanHeight; y++) {
-            let solidCount = 0;
-            for (let x = 0; x < scanWidth; x++) {
-              const alpha = data[(y * scanWidth + x) * 4 + 3];
-              if (alpha > 35) {
-                solidCount++;
-              }
-            }
-            // 3 solid pixels in a row confirms the true physical top of the hair
-            if (solidCount >= 3) {
-              // Ensure crownY takes the highest point (min Y) between scanned hair and anatomical crown
-              crownY = Math.min(y, crownY);
-              break;
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('Alpha scan fallback to anatomical crown:', err);
-      }
-    }
-
+    const crownY = Math.round(eyeCenterY - dEyeChin * 1.32);
     const headHeight = Math.max(30, chinY - crownY);
 
     return {
@@ -247,10 +198,144 @@ class FaceCropper {
   }
 
   /**
+   * Measure the actual physical crown (top of head/hair) and chin coordinates.
+   * If sourceCutout (transparent canvas with subject) is available, it analyzes
+   * alpha channel rows to detect the EXACT top-most hair pixel!
+   * Seamlessly supports single or multiple (couple/dual) faces!
+   */
+  measureTrueCrownAndChin(imgWidth, imgHeight, detection, sourceCutout = null) {
+    if (Array.isArray(detection) && detection.length > 1) {
+      const faceMetrics = detection.map((d) => this.measureSingleFace(imgWidth, imgHeight, d));
+      // Sort left to right
+      faceMetrics.sort((a, b) => a.faceCenterX - b.faceCenterX);
+
+      const minCrownY = Math.min(...faceMetrics.map((m) => m.crownY));
+      const maxChinY = Math.max(...faceMetrics.map((m) => m.chinY));
+      const avgEyeY = Math.round(faceMetrics.reduce((sum, m) => sum + m.eyeCenterY, 0) / faceMetrics.length);
+
+      const leftMost = faceMetrics[0];
+      const rightMost = faceMetrics[faceMetrics.length - 1];
+
+      const leftEdge = Math.max(0, leftMost.faceCenterX - leftMost.headWidth * 0.60);
+      const rightEdge = Math.min(imgWidth, rightMost.faceCenterX + rightMost.headWidth * 0.60);
+      const combinedCenter = Math.round((leftEdge + rightEdge) / 2);
+      const combinedWidth = Math.round(rightEdge - leftEdge);
+
+      let finalCrownY = minCrownY;
+      if (sourceCutout && (sourceCutout.getContext || (sourceCutout.width && sourceCutout.height))) {
+        try {
+          let scanCanvas = sourceCutout;
+          if (!sourceCutout.getContext) {
+            scanCanvas = document.createElement('canvas');
+            scanCanvas.width = imgWidth;
+            scanCanvas.height = imgHeight;
+            const sCtx = scanCanvas.getContext('2d');
+            sCtx.drawImage(sourceCutout, 0, 0, imgWidth, imgHeight);
+          }
+          const sCtx = scanCanvas.getContext('2d');
+          const minX = Math.max(0, Math.floor(leftEdge));
+          const maxX = Math.min(imgWidth - 1, Math.ceil(rightEdge));
+          const scanWidth = maxX - minX + 1;
+          const scanHeight = Math.max(1, Math.min(imgHeight, Math.floor(avgEyeY)));
+          if (scanWidth > 0 && scanHeight > 0) {
+            const imgData = sCtx.getImageData(minX, 0, scanWidth, scanHeight);
+            const data = imgData.data;
+            for (let y = 0; y < scanHeight; y++) {
+              let solidCount = 0;
+              for (let x = 0; x < scanWidth; x++) {
+                if (data[(y * scanWidth + x) * 4 + 3] > 35) {
+                  solidCount++;
+                }
+              }
+              if (solidCount >= 3) {
+                finalCrownY = Math.min(y, finalCrownY);
+                break;
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('Multi-face alpha scan fallback:', err);
+        }
+      }
+
+      const avgTilt = Math.round((faceMetrics.reduce((sum, m) => sum + m.tiltAngle, 0) / faceMetrics.length) * 10) / 10;
+
+      return {
+        faceCenterX: combinedCenter,
+        eyeCenterY: avgEyeY,
+        chinY: maxChinY,
+        crownY: finalCrownY,
+        headHeight: Math.max(30, maxChinY - finalCrownY),
+        headWidth: combinedWidth,
+        tiltAngle: Math.abs(avgTilt) < 3.5 ? avgTilt : 0,
+        isMultiFace: true,
+        faceCount: faceMetrics.length,
+      };
+    }
+
+    // Single detection handling (either single object or 1-element array)
+    const singleDet = Array.isArray(detection) ? detection[0] : detection;
+    const base = this.measureSingleFace(imgWidth, imgHeight, singleDet);
+    let crownY = base.crownY;
+
+    if (sourceCutout && (sourceCutout.getContext || (sourceCutout.width && sourceCutout.height))) {
+      try {
+        let scanCanvas = sourceCutout;
+        if (!sourceCutout.getContext) {
+          scanCanvas = document.createElement('canvas');
+          scanCanvas.width = imgWidth;
+          scanCanvas.height = imgHeight;
+          const sCtx = scanCanvas.getContext('2d');
+          sCtx.drawImage(sourceCutout, 0, 0, imgWidth, imgHeight);
+        }
+
+        const sCtx = scanCanvas.getContext('2d');
+        const minX = Math.max(0, Math.floor(base.faceCenterX - base.headWidth * 0.70));
+        const maxX = Math.min(imgWidth - 1, Math.ceil(base.faceCenterX + base.headWidth * 0.70));
+        const scanWidth = maxX - minX + 1;
+        const scanHeight = Math.max(1, Math.min(imgHeight, Math.floor(base.eyeCenterY)));
+
+        if (scanWidth > 0 && scanHeight > 0) {
+          const imgData = sCtx.getImageData(minX, 0, scanWidth, scanHeight);
+          const data = imgData.data;
+
+          for (let y = 0; y < scanHeight; y++) {
+            let solidCount = 0;
+            for (let x = 0; x < scanWidth; x++) {
+              const alpha = data[(y * scanWidth + x) * 4 + 3];
+              if (alpha > 35) {
+                solidCount++;
+              }
+            }
+            if (solidCount >= 3) {
+              crownY = Math.min(y, crownY);
+              break;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Alpha scan fallback to anatomical crown:', err);
+      }
+    }
+
+    return {
+      faceCenterX: base.faceCenterX,
+      eyeCenterY: base.eyeCenterY,
+      chinY: base.chinY,
+      crownY,
+      headHeight: Math.max(30, base.chinY - crownY),
+      headWidth: base.headWidth,
+      tiltAngle: base.tiltAngle,
+      isMultiFace: false,
+      faceCount: singleDet ? 1 : 0,
+    };
+  }
+
+  /**
    * Calculate standard photo crop rectangle based on detected face and actual crown
    * @param {number} imgWidth
    * @param {number} imgHeight
-   * @param {Object} detection - MediaPipe detection object
+   * @param {Object|Array} detection - MediaPipe detection object or array of detections
    * @param {string} presetKey - 'passport_bd' | 'stamp'
    * @param {HTMLCanvasElement|HTMLImageElement} sourceCutout - Optional transparent cutout
    * @returns {Object}
@@ -261,14 +346,21 @@ class FaceCropper {
 
     const metrics = this.measureTrueCrownAndChin(imgWidth, imgHeight, detection, sourceCutout);
 
-    // Official reference specifications:
-    // Head occupies preset.headRatio (Passport: 74.4% = 33.5mm, Stamp: 70.0% = 17.5mm)
-    // Top margin above crown is preset.topMarginRatio (Passport: 7.78% = 3.5mm, Stamp: 10.0% = 2.5mm)
     const targetHeadRatio = preset.headRatio || 0.7444;
     const topMarginRatio = preset.topMarginRatio || 0.0778;
 
-    const cropHeight = Math.round(metrics.headHeight / targetHeadRatio);
-    const cropWidth = Math.round(cropHeight * targetAspect);
+    let cropHeight = Math.round(metrics.headHeight / targetHeadRatio);
+    let cropWidth = Math.round(cropHeight * targetAspect);
+
+    // Multi-face couple/joint framing adjustments:
+    if (metrics.isMultiFace) {
+      // Must ensure both people with their shoulders fit nicely within frame
+      const minRequiredWidth = Math.round(metrics.headWidth * 1.30);
+      if (cropWidth < minRequiredWidth) {
+        cropWidth = minRequiredWidth;
+        cropHeight = Math.round(cropWidth / targetAspect);
+      }
+    }
 
     // Center horizontally on subject face
     const cropX = Math.round(metrics.faceCenterX - cropWidth / 2);
@@ -282,12 +374,14 @@ class FaceCropper {
       cropWidth,
       cropHeight,
       tiltAngle: metrics.tiltAngle,
-      faceDetected: !!detection,
+      faceDetected: !!detection && (Array.isArray(detection) ? detection.length > 0 : true),
       faceCenterX: metrics.faceCenterX,
       eyeCenterY: metrics.eyeCenterY,
       chinY: metrics.chinY,
       crownY: metrics.crownY,
       headHeight: metrics.headHeight,
+      isMultiFace: !!metrics.isMultiFace,
+      faceCount: metrics.faceCount || 1,
     };
   }
 

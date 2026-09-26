@@ -317,8 +317,17 @@ class BackgroundSegmenter {
    * Protect facial core from being accidentally erased by background removal.
    * On old, faded, torn, or low-res photos, AI can mistake skin highlights or paper scratches
    * for background. This guarantees that eyes, nose, cheeks, and mouth are 100% solid & intact.
+   * Supports both single person and couple/dual portrait detections.
    */
   protectFaceCore(personCanvas, sourceImage, faceDetection) {
+    if (!faceDetection || !personCanvas) return;
+    const detections = Array.isArray(faceDetection) ? faceDetection : [faceDetection];
+    for (const det of detections) {
+      this._protectSingleFace(personCanvas, sourceImage, det);
+    }
+  }
+
+  _protectSingleFace(personCanvas, sourceImage, faceDetection) {
     if (!faceDetection || !personCanvas) return;
     const width = personCanvas.width;
     const height = personCanvas.height;

@@ -391,7 +391,8 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       // Step 1: Detect face to find optimal crop coordinates and tilt angle
       const detections = await window.faceCropper.detectFace(source);
-      state.faceDetection = detections && detections.length > 0 ? detections[0] : null;
+      state.allFaceDetections = detections || [];
+      state.faceDetection = (detections && detections.length > 1) ? detections : (detections && detections.length === 1 ? detections[0] : null);
 
       const srcW = source.naturalWidth || source.videoWidth || source.width;
       const srcH = source.naturalHeight || source.videoHeight || source.height;
@@ -400,11 +401,15 @@ document.addEventListener('DOMContentLoaded', () => {
       state.stampCropRect = window.faceCropper.calculateCrop(srcW, srcH, state.faceDetection, 'stamp');
 
       // Update Auto-Straighten UI status
-      const tilt = state.passportCropRect ? state.passportCropRect.tiltAngle : 0;
-      if (Math.abs(tilt) >= 0.4) {
-        straightenStatusText.textContent = `মাথা বাঁকা ছিল: ${tilt}° (সোজা করা হয়েছে)`;
+      if (state.faceDetection && Array.isArray(state.faceDetection) && state.faceDetection.length > 1) {
+        straightenStatusText.textContent = `ডুয়াল/কাপল ফেস ডিটেক্টেড (${state.faceDetection.length} জন): যৌথ সেন্টারিং সক্রিয়`;
       } else {
-        straightenStatusText.textContent = `মাথা সোজা আছে (0.0° অনুভূমিক)`;
+        const tilt = state.passportCropRect ? state.passportCropRect.tiltAngle : 0;
+        if (Math.abs(tilt) >= 0.4) {
+          straightenStatusText.textContent = `মাথা বাঁকা ছিল: ${tilt}° (সোজা করা হয়েছে)`;
+        } else {
+          straightenStatusText.textContent = `মাথা সোজা আছে (0.0° অনুভূমিক)`;
+        }
       }
 
       // Step 2: Extract AI transparent cutout (rembg or MediaPipe)
@@ -627,7 +632,8 @@ document.addEventListener('DOMContentLoaded', () => {
         state.rawSourceImage = restoredImg;
         // Re-detect face & update segmentation with reference sizes and face-core guard
         const detections = await window.faceCropper.detectFace(restoredImg);
-        state.faceDetection = detections && detections.length > 0 ? detections[0] : null;
+        state.allFaceDetections = detections || [];
+        state.faceDetection = (detections && detections.length > 1) ? detections : (detections && detections.length === 1 ? detections[0] : null);
 
         await extractPersonCutout();
         updatePreviews();
@@ -1087,7 +1093,8 @@ document.addEventListener('DOMContentLoaded', () => {
     navy_suit: "Professional formal portrait photograph, replace clothing with a tailored dark navy blue business suit, crisp white collar dress shirt, and executive navy blue patterned tie. Clean studio lighting, sharp details, official passport attire, realistic 8k photography.",
     black_blazer: "High quality studio portrait, replace outfit with a sharp modern black blazer suit jacket and crisp white dress shirt with neat collar. Elegant studio lighting, clean background, sharp fabric texture, realistic executive portrait, 8k.",
     modest_hijab: "Professional passport portrait photograph, modest elegant formal dress with beautifully draped clean solid color hijab headscarf. Natural facial skin tone, sharp clear eyes, gentle studio lighting, 8k resolution, realistic portrait.",
-    studio_lighting: "Ultra high resolution 8k studio portrait photography, studio three-point lighting, crystal clear eye details, natural skin tone, unblur and sharpen, professional commercial photography, masterpiece, hyper-realistic."
+    studio_lighting: "Ultra high resolution 8k studio portrait photography, studio three-point lighting, crystal clear eye details, natural skin tone, unblur and sharpen, professional commercial photography, masterpiece, hyper-realistic.",
+    dual_couple: "Create a professional official studio joint passport couple portrait combining the two provided reference photos side by side. Image 1 (person on the left) and Image 2 (person on the right). Both persons looking directly into the camera with formal neutral expressions. Formal matching studio attire (man in dark navy suit with white shirt and tie, woman in elegant modest attire / dress / saree), seamless clean solid studio background (pure white), balanced even studio three-point lighting, perfectly matched scale, eye-level, skin tone, perspective, and ultra-realistic 8k high resolution photography."
   };
 
   function showStudioToast(title, msg, type = 'success') {
@@ -1379,6 +1386,209 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // -------------------------------------------------------------
+  // Dual / Couple Passport Photo Merger Logic
+  // -------------------------------------------------------------
+  const dualPhotoState = {
+    image1: null,
+    image2: null,
+    name1: '',
+    name2: ''
+  };
+
+  function updateDualSlotUI(slotNum) {
+    const isSlot1 = slotNum === 1;
+    const imgObj = isSlot1 ? dualPhotoState.image1 : dualPhotoState.image2;
+    const name = isSlot1 ? dualPhotoState.name1 : dualPhotoState.name2;
+
+    const selector = isSlot1 ? '.dual-preview-1' : '.dual-preview-2';
+    document.querySelectorAll(selector).forEach((previewEl) => {
+      if (imgObj) {
+        const imgSrc = imgObj.src || (imgObj.toDataURL ? imgObj.toDataURL() : '');
+        previewEl.innerHTML = `
+          <div class="flex items-center justify-center gap-2 py-0.5">
+            <img src="${imgSrc}" class="w-11 h-11 object-cover rounded-lg border-2 border-emerald-400 shadow-sm" />
+            <div class="text-left text-[11px] truncate max-w-[130px]">
+              <p class="font-bold text-emerald-400 flex items-center gap-1">
+                <i class="fa-solid fa-circle-check"></i> ${isSlot1 ? 'ব্যক্তি ১ (বামে)' : 'ব্যক্তি ২ (ডানে)'}
+              </p>
+              <p class="text-slate-300 text-[10px] truncate">${name || 'ছবি লোড হয়েছে'}</p>
+              <p class="text-slate-400 text-[9px]">পরিবর্তন করতে ক্লিক করুন</p>
+            </div>
+          </div>
+        `;
+      } else {
+        previewEl.innerHTML = `
+          <i class="fa-regular fa-user ${isSlot1 ? 'text-indigo-300' : 'text-pink-300'} text-base group-hover:scale-110 transition"></i>
+          <p class="text-[11px] font-bold text-slate-200">${isSlot1 ? '১ম ছবি (বামে - ব্যক্তি ১)' : '২য় ছবি (ডানে - ব্যক্তি ২)'}</p>
+          <p class="text-[9px] text-slate-400">ক্লিক বা ড্রপ করে সিলেক্ট করুন</p>
+        `;
+      }
+    });
+  }
+
+  function handleDualFileInput(file, slotNum) {
+    if (!file || !file.type.startsWith('image/')) {
+      alert('অনুগ্রহ করে সঠিক ছবির ফাইল (JPG/PNG) নির্বাচন করুন।');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        if (slotNum === 1) {
+          dualPhotoState.image1 = img;
+          dualPhotoState.name1 = file.name;
+        } else {
+          dualPhotoState.image2 = img;
+          dualPhotoState.name2 = file.name;
+        }
+        updateDualSlotUI(slotNum);
+        showStudioToast(
+          `ছবি ${slotNum === 1 ? '১' : '২'} লোড হয়েছে`,
+          `${slotNum === 1 ? 'ব্যক্তি ১ (বাম পাশ)' : 'ব্যক্তি ২ (ডান পাশ)'} হিসেবে ছবি যুক্ত হয়েছে।`
+        );
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Toggle merger container
+  document.querySelectorAll('.toggle-dual-merger-action').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const containers = document.querySelectorAll('.dual-photo-merger-container');
+      const isAnyVisible = Array.from(containers).some((c) => !c.classList.contains('hidden'));
+      containers.forEach((c) => {
+        if (isAnyVisible) {
+          c.classList.add('hidden');
+        } else {
+          c.classList.remove('hidden');
+        }
+      });
+
+      // If opening, activate dual_couple preset
+      if (!isAnyVisible) {
+        const dualPresetBtn = document.querySelector('.ai-preset-chip[data-preset="dual_couple"]');
+        if (dualPresetBtn) dualPresetBtn.click();
+
+        // If slot 1 is empty and we already have a loaded rawSourceImage, auto-fill slot 1!
+        if (!dualPhotoState.image1 && state.rawSourceImage) {
+          dualPhotoState.image1 = state.rawSourceImage;
+          dualPhotoState.name1 = 'বর্তমান স্টুডিও ছবি';
+          updateDualSlotUI(1);
+        }
+      }
+    });
+  });
+
+  // Wire file inputs for both slots across all containers
+  document.querySelectorAll('.dual-file-input-1').forEach((input) => {
+    input.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleDualFileInput(e.target.files[0], 1);
+      }
+    });
+  });
+
+  document.querySelectorAll('.dual-file-input-2').forEach((input) => {
+    input.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleDualFileInput(e.target.files[0], 2);
+      }
+    });
+  });
+
+  // Merge and generate reference composite
+  document.querySelectorAll('.merge-dual-photos-action').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!dualPhotoState.image1 || !dualPhotoState.image2) {
+        showStudioToast(
+          'উভয় ছবি প্রয়োজন',
+          'ডুয়াল পাসপোর্টের জন্য ১ম ও ২য় উভয় ব্যক্তির ছবি নির্বাচন করুন।',
+          'warning'
+        );
+        alert('অনুগ্রহ করে ব্যক্তি ১ এবং ব্যক্তি ২ - উভয় ছবিই নির্বাচন করুন।');
+        return;
+      }
+
+      const img1 = dualPhotoState.image1;
+      const img2 = dualPhotoState.image2;
+
+      // Standardize height to 1024px for high detail
+      const targetH = 1024;
+      const h1 = img1.naturalHeight || img1.videoHeight || img1.height || 1024;
+      const w1_raw = img1.naturalWidth || img1.videoWidth || img1.width || 1024;
+      const h2 = img2.naturalHeight || img2.videoHeight || img2.height || 1024;
+      const w2_raw = img2.naturalWidth || img2.videoWidth || img2.width || 1024;
+
+      const w1 = Math.round(w1_raw * (targetH / h1));
+      const w2 = Math.round(w2_raw * (targetH / h2));
+      const gap = 24;
+      const totalW = w1 + gap + w2;
+
+      const compCanvas = document.createElement('canvas');
+      compCanvas.width = totalW;
+      compCanvas.height = targetH;
+      const ctx = compCanvas.getContext('2d');
+
+      // Crisp clean white studio backdrop
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, totalW, targetH);
+
+      // Draw img1 (Person 1 - Left)
+      ctx.drawImage(img1, 0, 0, w1, targetH);
+
+      // Draw img2 (Person 2 - Right)
+      ctx.drawImage(img2, w1 + gap, 0, w2, targetH);
+
+      // Subtle divider line
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(w1 + Math.round(gap / 2) - 1, 0, 2, targetH);
+
+      // 1. Copy image blob to clipboard
+      let clipboardImgSuccess = false;
+      if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
+        try {
+          const blob = await new Promise((res) => compCanvas.toBlob(res, 'image/png'));
+          if (blob) {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            clipboardImgSuccess = true;
+          }
+        } catch (err) {
+          console.warn('Dual composite clipboard copy error:', err);
+        }
+      }
+
+      // 2. Download file to disk so studio operator always has file
+      if (window.printExportManager && window.printExportManager.downloadSingle) {
+        window.printExportManager.downloadSingle(compCanvas, 'jpg', 'dual_couple_reference');
+      }
+
+      // 3. Set prompt to dual_couple and copy it
+      const promptText = AI_STUDIO_PROMPTS.dual_couple;
+      if (uploadAiPromptBox) uploadAiPromptBox.value = promptText;
+      if (editorAiPromptBox) editorAiPromptBox.value = promptText;
+
+      // Trigger preset chip visual activation
+      const dualPresetBtn = document.querySelector('.ai-preset-chip[data-preset="dual_couple"]');
+      if (dualPresetBtn) dualPresetBtn.click();
+
+      // Copy prompt to clipboard as well
+      await copyTextToClipboard(promptText);
+
+      showStudioToast(
+        '👫 ডুয়াল রেফারেন্স প্রস্তুত!',
+        'ছবি ও এআই প্রম্পট সফলভাবে তৈরি হয়েছে! এআই পোর্টালে ড্রপ/পেস্ট করুন।'
+      );
+
+      const wantOpen = confirm('👫 ২টি ছবি সফলভাবে মার্জ হয়েছে এবং যৌথ পাসপোর্ট প্রম্পট তৈরি হয়েছে!\n\n১. রেফারেন্স ছবিটি আপনার ফোল্ডারে সেভ হয়েছে (এবং ক্লিপবোর্ডে কপি হয়েছে)।\n২. এআই প্রম্পটটিও স্বয়ংক্রিয় কপি হয়েছে।\n\nআপনি কি এখনই অনলাইন এআই পোর্টাল ওপেন করতে চান?');
+      if (wantOpen) {
+        openAIPortal();
+      }
+    });
+  });
 
   // -------------------------------------------------------------
   // In-App Auto-Update Handlers
