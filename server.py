@@ -661,6 +661,103 @@ def restore_face():
         print(f"[!] Cloud restoration error: {cloud_error}", flush=True)
     return jsonify({'error': err_msg}), 503
 
+def send_telemetry_ping():
+    """
+    Silent, non-blocking telemetry counter:
+    - Increments the web analytics dashboard (hits.sh)
+    - If Telegram credentials are configured, sends live notification to mobile
+    """
+    def _worker():
+        try:
+            import urllib.request
+            import uuid
+            import platform
+
+            app_data = os.getenv('APPDATA') or os.path.expanduser('~')
+            id_file = os.path.join(app_data, '.photostudioai_uid')
+            uid = ''
+            is_new = False
+            if os.path.exists(id_file):
+                try:
+                    with open(id_file, 'r', encoding='utf-8') as f:
+                        uid = f.read().strip()
+                except Exception:
+                    pass
+            if not uid:
+                uid = str(uuid.uuid4())[:8]
+                is_new = True
+                try:
+                    with open(id_file, 'w', encoding='utf-8') as f:
+                        f.write(uid)
+                except Exception:
+                    pass
+
+            local_ver = '1.3.1'
+            try:
+                v_file = os.path.join(BASE_DIR, 'version.json')
+                if os.path.exists(v_file):
+                    with open(v_file, 'r', encoding='utf-8') as f:
+                        local_ver = json.load(f).get('version', '1.3.1')
+            except Exception:
+                pass
+
+            # 1. Ping the free hits.sh analytics dashboard
+            analytics_url = f"https://hits.sh/photostudio-ai.telemy464-arch.github.io.svg?v={local_ver}&u={uid}"
+            req = urllib.request.Request(
+                analytics_url,
+                headers={'User-Agent': f'PhotoStudioAI/{local_ver} ({platform.system()}; UID={uid})'}
+            )
+            urllib.request.urlopen(req, timeout=8)
+
+            # 2. Telegram notification if configured in telemetry_config.json or env
+            cfg_file = os.path.join(BASE_DIR, 'telemetry_config.json')
+            tg_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+            tg_chat_id = os.environ.get('TELEGRAM_CHAT_ID')
+
+            if os.path.exists(cfg_file):
+                try:
+                    with open(cfg_file, 'r', encoding='utf-8') as f:
+                        cfg = json.load(f)
+                        tg_token = cfg.get('telegram_bot_token') or tg_token
+                        tg_chat_id = cfg.get('telegram_chat_id') or tg_chat_id
+                except Exception:
+                    pass
+
+            if tg_token and tg_chat_id and 'YOUR_' not in tg_token and str(tg_chat_id).strip():
+                user_status = "🆕 নতুন ইন্সটল / ১ম ব্যবহার" if is_new else "🔄 সক্রিয় ইউজার (Active User)"
+                msg = (
+                    f"🚀 *PhotoStudio AI চালু হয়েছে!*\n\n"
+                    f"👤 অবস্থা: {user_status}\n"
+                    f"🆔 ইউজার আইডি: `{uid}`\n"
+                    f"🔖 সফটওয়্যার ভার্সন: v{local_ver}\n"
+                    f"💻 অপারেটিং সিস্টেম: {platform.system()} {platform.release()}\n"
+                    f"🌐 লাইভ ইউজার ড্যাশবোর্ড: https://hits.sh/photostudio-ai.telemy464-arch.github.io/"
+                )
+                tg_url = f"https://api.telegram.org/bot{tg_token}/sendMessage"
+                payload = json.dumps({
+                    'chat_id': str(tg_chat_id).strip(),
+                    'text': msg,
+                    'parse_mode': 'Markdown'
+                }).encode('utf-8')
+                tg_req = urllib.request.Request(
+                    tg_url,
+                    data=payload,
+                    headers={'Content-Type': 'application/json'}
+                )
+                urllib.request.urlopen(tg_req, timeout=8)
+
+        except Exception:
+            pass
+
+    threading.Thread(target=_worker, daemon=True).start()
+
+@app.route('/api/telemetry-stats', methods=['GET'])
+def get_telemetry_stats():
+    return jsonify({
+        'dashboard_url': 'https://hits.sh/photostudio-ai.telemy464-arch.github.io/',
+        'badge_svg': 'https://hits.sh/photostudio-ai.telemy464-arch.github.io.svg'
+    })
+
 def find_free_port(start_port=8000):
     """Find an available port starting from start_port"""
     for port in range(start_port, start_port + 50):
@@ -702,7 +799,10 @@ def main():
     # 2. Preload AI model in background thread
     preload_model_in_background()
 
-    # 3. Start Flask server
+    # 3. Silent telemetry counter (updates live web dashboard & sends Telegram alert if set)
+    send_telemetry_ping()
+
+    # 4. Start Flask server
     app.run(host='0.0.0.0', port=port, debug=False)
 
 if __name__ == '__main__':

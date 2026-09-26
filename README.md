@@ -1,4 +1,8 @@
-# 📸 PhotoStudio AI — Passport & Stamp Photo Studio (v1.2.0)
+# 📸 PhotoStudio AI — Passport & Stamp Photo Studio (v1.3.1)
+
+[![Active Users](https://hits.sh/photostudio-ai.telemy464-arch.github.io.svg?label=Active%20Users&color=6366f1)](https://hits.sh/photostudio-ai.telemy464-arch.github.io/)
+[![GitHub release](https://img.shields.io/badge/version-v1.3.1-emerald.svg)](https://github.com/telemy464-arch/PhotoStudioAI/releases)
+[![Analytics Dashboard](https://img.shields.io/badge/Live%20Dashboard-View%20Stats-indigo.svg)](https://hits.sh/photostudio-ai.telemy464-arch.github.io/)
 
 ল্যাপটপ/পিসি এবং মোবাইলের জন্য এআই-চালিত স্বয়ংক্রিয় পাসপোর্ট (35×45mm) ও স্ট্যাম্প (20×25mm) সাইজ ছবি তৈরির একটি আধুনিক ও প্রফেশনাল স্টুডিও সফটওয়্যার।
 

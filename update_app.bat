@@ -40,15 +40,24 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "}"
 
 :SYNC_DIST
-if not exist "dist\PhotoStudioAI\_internal" goto FINISH
-
-echo.
-echo [*] Syncing portable build...
-if exist "index.html" copy /y "index.html" "dist\PhotoStudioAI\_internal\index.html" >nul
-if exist "version.json" copy /y "version.json" "dist\PhotoStudioAI\_internal\version.json" >nul
-if exist "js" xcopy /y /e /i "js" "dist\PhotoStudioAI\_internal\js" >nul
-if exist "css" xcopy /y /e /i "css" "dist\PhotoStudioAI\_internal\css" >nul
-echo [OK] Portable build synced.
+if exist "_internal" (
+    echo.
+    echo [*] Syncing local _internal portable runtime...
+    if exist "index.html" copy /y "index.html" "_internal\index.html" >nul
+    if exist "version.json" copy /y "version.json" "_internal\version.json" >nul
+    if exist "js" xcopy /y /e /i "js" "_internal\js" >nul
+    if exist "css" xcopy /y /e /i "css" "_internal\css" >nul
+    echo [OK] Portable runtime updated.
+)
+if exist "dist\PhotoStudioAI\_internal" (
+    echo.
+    echo [*] Syncing portable build...
+    if exist "index.html" copy /y "index.html" "dist\PhotoStudioAI\_internal\index.html" >nul
+    if exist "version.json" copy /y "version.json" "dist\PhotoStudioAI\_internal\version.json" >nul
+    if exist "js" xcopy /y /e /i "js" "dist\PhotoStudioAI\_internal\js" >nul
+    if exist "css" xcopy /y /e /i "css" "dist\PhotoStudioAI\_internal\css" >nul
+    echo [OK] Portable build synced.
+)
 
 :FINISH
 echo.
@@ -56,6 +65,10 @@ echo ========================================================
 echo   [OK] PhotoStudio AI update process completed!
 echo ========================================================
 echo.
-echo Double-click run_app.bat to launch the application.
+if exist "PhotoStudioAI.exe" (
+    echo Double-click PhotoStudioAI.exe to launch the application.
+) else (
+    echo Double-click run_app.bat to launch the application.
+)
 echo.
 pause

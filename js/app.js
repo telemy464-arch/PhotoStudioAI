@@ -1729,5 +1729,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.target === docsModal) closeDocsModal();
     });
   }
+
+  // -------------------------------------------------------------
+  // Silent User Analytics Counter (Live Web Dashboard)
+  // -------------------------------------------------------------
+  try {
+    const pingImg = new Image();
+    pingImg.src = 'https://hits.sh/photostudio-ai.telemy464-arch.github.io.svg?v=1.3.1&t=' + Date.now();
+  } catch (e) {}
 });
 
