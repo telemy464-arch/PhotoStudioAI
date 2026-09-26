@@ -1,0 +1,36 @@
+# Virtual environments
+.venv/
+env/
+venv/
+ENV/
+
+# Python cache & compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# PyInstaller build outputs
+build/
+*.spec
+
+# Large binaries and build distributions (distribute portable zips via GitHub Releases)
+dist/
+
+# AI Model checkpoints (>100MB - downloaded automatically by rembg on first run)
+models/
+*.onnx
+*.pth
+*.pt
+*.bin
+
+# Temporary test outputs
+assets/test_*
+test_*
+*.tmp
+*.log
+
+# Windows / OS junk
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/

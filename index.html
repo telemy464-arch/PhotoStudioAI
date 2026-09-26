@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="bn" class="h-full bg-slate-50 text-slate-800">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>PhotoStudio AI — Passport & Stamp Photo Creator</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            },
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- MediaPipe CDN scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/face_detection.js" crossorigin="anonymous"></script>
+
+  <!-- jsPDF for vector-accurate print PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body class="min-h-full flex flex-col bg-slate-50 text-slate-800 antialiased selection:bg-brand-500 selection:text-white">
+  
+  <!-- Top Navigation Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+          <i class="fa-solid fa-id-card text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900 tracking-tight leading-none">PhotoStudio AI</h1>
+          <p class="text-xs text-slate-500 mt-1">পাসপোর্ট ও স্ট্যাম্প ফটো মেকার (300 DPI Studio Quality)</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <!-- AI Studio Assistant Launcher button -->
+        <button id="nav-ai-assistant-btn" type="button" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-sm transition cursor-pointer">
+          <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
+          <span class="hidden sm:inline">এআই স্টুডিও অ্যাসিস্ট্যান্ট</span>
+          <span class="sm:hidden">এআই অ্যাসিস্ট্যান্ট</span>
+        </button>
+
+        <!-- Check Update button -->
+        <button id="check-update-btn" type="button" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 border border-slate-200 shadow-sm transition cursor-pointer" title="সফটওয়্যার আপডেট চেক করুন">
+          <i class="fa-solid fa-arrows-rotate text-indigo-600"></i>
+          <span id="nav-ver-text">v1.2.0</span>
+          <span id="update-available-dot" class="w-2 h-2 rounded-full bg-rose-500 hidden animate-pulse"></span>
+        </button>
+
+        <!-- Documentation button -->
+        <button id="open-docs-btn" type="button" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 shadow-sm transition">
+          <i class="fa-solid fa-book-open text-brand-600"></i>
+          <span>ডকুমেন্টেশন</span>
+        </button>
+
+        <!-- WhatsApp Link -->
+        <a href="https://wa.me/8801737929107" target="_blank" rel="noopener noreferrer" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm transition" title="Contact on WhatsApp: 01737929107">
+          <i class="fa-brands fa-whatsapp text-sm"></i>
+          <span class="hidden md:inline">Contact us WhatsApp</span>
+          <span class="md:hidden">WhatsApp</span>
+        </a>
+
+        <!-- Facebook Link -->
+        <a href="https://www.facebook.com/Agpt2/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition" title="Visit Facebook Profile">
+          <i class="fa-brands fa-facebook-f text-sm"></i>
+          <span class="hidden md:inline">Facebook</span>
+        </a>
+
+        <!-- AI Status Badge -->
+        <span class="hidden lg:inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+          <span class="w-2 h-2 mr-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+          AI Powered
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Mode Selector Tabs (Upload vs Live Camera) -->
+    <div class="bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200 max-w-md mx-auto grid grid-cols-2 gap-1">
+      <button id="tab-upload-btn" class="flex items-center justify-center space-x-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200 bg-brand-600 text-white shadow-sm">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <span>১. ছবি আপলোড</span>
+      </button>
+      <button id="tab-camera-btn" class="flex items-center justify-center space-x-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+        <i class="fa-solid fa-camera"></i>
+        <span>২. লাইভ ক্যামেরা</span>
+      </button>
+    </div>
+
+    <!-- SECTION 1: PHOTO UPLOAD VIEW -->
+    <section id="upload-section" class="space-y-6">
+      <div class="max-w-2xl mx-auto bg-white rounded-3xl p-8 border-2 border-dashed border-slate-300 hover:border-brand-500 transition-all text-center shadow-sm hover:shadow-md cursor-pointer relative group" id="drop-zone">
+        <input type="file" id="photo-file-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+        
+        <div class="space-y-4">
+          <div class="w-16 h-16 mx-auto rounded-2xl bg-blue-50 text-brand-600 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+            <i class="fa-solid fa-images"></i>
+          </div>
+          <div>
+            <p class="text-base font-semibold text-slate-800">আপনার ছবি এখানে ড্র্যাগ করুন অথবা ক্লিক করে সিলেক্ট করুন</p>
+            <p class="text-xs text-slate-500 mt-1">ল্যাপটপ বা মোবাইল গ্যালারি থেকে যেকোনো ছবি (JPG, PNG) আপলোড করুন</p>
+          </div>
+          <div class="flex items-center justify-center gap-3">
+            <button type="button" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-xl shadow-sm transition">
+              <i class="fa-solid fa-folder-open mr-2"></i>ছবি পছন্দ করুন
+            </button>
+            <button type="button" id="load-sample-btn" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-xl transition">
+              <i class="fa-solid fa-wand-magic-sparkles mr-2 text-indigo-600"></i>ডেমো ছবি ট্রাই করুন
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONLINE AI STUDIO ASSISTANT PANEL (Option B) -->
+      <div id="upload-ai-assistant-panel" class="max-w-2xl mx-auto bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-7 text-white border border-indigo-500/30 shadow-xl space-y-6 relative overflow-hidden">
+        <!-- Ambient Glow -->
+        <div class="absolute -right-20 -top-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-20 -bottom-20 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <!-- Header -->
+        <div class="relative z-10 flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-white/10">
+          <div class="flex items-center space-x-3">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25">
+              <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-bold text-white tracking-wide">অনলাইন এআই স্টুডিও অ্যাসিস্ট্যান্ট</h3>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">Ultra HD AI</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-0.5">ভাঙ্গা মুখ মেরামত, ফেস রিস্টোরেশন ও প্রফেশনাল স্যুট-টাই তৈরির কমপ্লিট সলিউশন</p>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <button type="button" class="open-ai-portal-action px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-xs font-bold shadow-md hover:shadow-lg transition flex items-center gap-2 border border-white/20 cursor-pointer">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              <span>এআই পোর্টাল ওপেন</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2 Main Options Grid -->
+        <!-- Option 1: Prompting Dialogue Box & Presets -->
+        <div class="relative z-10 space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold uppercase tracking-wider text-indigo-200 flex items-center gap-1.5">
+              <i class="fa-solid fa-comment-dots text-amber-300"></i>
+              <span>অপশন ১: এআই প্রম্পট ডায়ালগ ও ইনগ্রেডিয়েন্ট (Prompt Dialogue Box)</span>
+            </label>
+            <span class="text-[11px] text-slate-400">১ ক্লিকে কপি করুন</span>
+          </div>
+
+          <!-- Quick Preset Chips -->
+          <div class="flex flex-wrap gap-2 ai-prompt-preset-list">
+            <button type="button" data-preset="broken_face" class="ai-preset-chip active px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 text-white border border-indigo-400/40 shadow-sm hover:bg-indigo-500 transition cursor-pointer">
+              🩹 ভাঙ্গা ও কাটা মুখ মেরামত
+            </button>
+            <button type="button" data-preset="navy_suit" class="ai-preset-chip px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 text-slate-200 border border-white/10 hover:bg-white/20 transition cursor-pointer">
+              👔 নেভি স্যুট ও টাই
+            </button>
+            <button type="button" data-preset="black_blazer" class="ai-preset-chip px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 text-slate-200 border border-white/10 hover:bg-white/20 transition cursor-pointer">
+              🧥 কালো ব্লেজার ও সাদা শার্ট
+            </button>
+            <button type="button" data-preset="modest_hijab" class="ai-preset-chip px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 text-slate-200 border border-white/10 hover:bg-white/20 transition cursor-pointer">
+              🧕 মার্জিত ড্রেস / হিজাব
+            </button>
+            <button type="button" data-preset="studio_lighting" class="ai-preset-chip px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 text-slate-200 border border-white/10 hover:bg-white/20 transition cursor-pointer">
+              💡 আল্ট্রা এইচডি ও স্টুডিও লাইট
+            </button>
+          </div>
+
+          <!-- Prompt Dialogue Box -->
+          <div class="space-y-2">
+            <textarea id="upload-ai-prompt-box" rows="3" class="ai-prompt-textarea w-full bg-slate-950/80 border border-indigo-500/40 rounded-2xl p-3.5 text-xs text-slate-100 font-mono focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 outline-none resize-none leading-relaxed" placeholder="প্রম্পট লিখুন বা উপরের বাটন থেকে সিলেক্ট করুন..."></textarea>
+            
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <button type="button" class="copy-ai-prompt-action px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md hover:shadow-lg transition flex items-center gap-1.5 cursor-pointer">
+                  <i class="fa-solid fa-copy"></i>
+                  <span>📋 প্রম্পট কপি করুন</span>
+                </button>
+                
+                <button type="button" class="copy-ingredient-photo-action px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 text-xs font-semibold border border-white/10 transition flex items-center gap-1.5 cursor-pointer" title="ইনগ্রেডিয়েন্ট রেফারেন্স ছবি">
+                  <i class="fa-regular fa-image"></i>
+                  <span>📷 ইনগ্রেডিয়েন্ট ছবি কপি / ডাউনলোড</span>
+                </button>
+              </div>
+
+              <span class="text-[11px] text-slate-400 flex items-center gap-1">
+                <i class="fa-solid fa-circle-info text-indigo-400"></i>
+                <span>প্রম্পট কপি করে এআই পোর্টালে ছবি সহ দিন</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Option 2: Instant Auto-Ingest Dropzone -->
+        <div class="relative z-10 space-y-2 pt-3 border-t border-white/10">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-bolt-lightning text-amber-300"></i>
+              <span>অপশন ২: এআই থেকে পাওয়া ছবিটি দিন (Instant Auto Passport & Stamp)</span>
+            </label>
+            <span class="text-[11px] text-slate-400">অটো কাটআউট ও ফ্রেমিং</span>
+          </div>
+
+          <div id="upload-ai-dropzone" class="ai-ingest-dropzone border-2 border-dashed border-indigo-400/50 hover:border-emerald-400 bg-slate-950/50 hover:bg-indigo-950/40 rounded-2xl p-6 text-center cursor-pointer transition-all group relative">
+            <input type="file" id="upload-ai-file-input" accept="image/*" class="ai-ingest-file-input absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+            <div class="space-y-2">
+              <div class="w-12 h-12 mx-auto rounded-xl bg-indigo-500/20 text-indigo-400 group-hover:text-emerald-300 group-hover:scale-110 flex items-center justify-center text-2xl transition">
+                <i class="fa-solid fa-cloud-arrow-down"></i>
+              </div>
+              <p class="text-sm font-bold text-white group-hover:text-emerald-300 transition">
+                এআই থেকে ডাউনলোড করা ছবিটি এখানে ড্রপ করুন অথবা ক্লিক করে সিলেক্ট করুন
+              </p>
+              <p class="text-[11px] text-slate-400">
+                💡 ছবি দেওয়ার সাথে সাথেই স্বয়ংক্রিয়ভাবে ব্যাকগ্রাউন্ড রিমুভ, মাথা সোজা ও পাসপোর্ট (35×45mm) এবং স্ট্যাম্প (20×25mm) সাইজ রেডি হয়ে যাবে!
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: LIVE WEBCAM VIEW -->
+    <section id="camera-section" class="hidden space-y-6 max-w-2xl mx-auto">
+      <div class="camera-overlay-container aspect-[4/3] sm:aspect-[16/10] relative rounded-3xl shadow-xl border border-slate-800">
+        <!-- Live Video Element -->
+        <video id="webcam-video" playsinline autoplay muted class="w-full h-full object-cover transform scale-x-[-1]"></video>
+
+        <!-- Oval Guide Overlay for Face Alignment -->
+        <div id="camera-oval-guide" class="camera-guide-oval"></div>
+        <div class="camera-crosshair-h"></div>
+        <div class="camera-crosshair-v"></div>
+
+        <!-- Real-time Alignment Status Badge -->
+        <div class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-20">
+          <div id="camera-status-pill" class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900/80 text-white backdrop-blur-md border border-white/20 shadow flex items-center space-x-2">
+            <span id="camera-status-dot" class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            <span id="camera-status-text">ক্যামেরার দিকে তাকান ও মুখটি ওভালের মাঝে রাখুন...</span>
+          </div>
+
+          <!-- Flip camera button (Mobile) -->
+          <button id="camera-flip-btn" class="pointer-events-auto p-2.5 rounded-full bg-slate-900/80 hover:bg-slate-800 text-white backdrop-blur-md border border-white/20 transition">
+            <i class="fa-solid fa-camera-rotate text-sm"></i>
+          </button>
+        </div>
+
+        <!-- Big Countdown Badge -->
+        <div id="camera-countdown-badge" class="hidden absolute inset-0 flex items-center justify-center text-8xl font-black text-white drop-shadow-2xl z-30 pointer-events-none">
+          3
+        </div>
+
+        <!-- Bottom Camera Controls -->
+        <div class="absolute bottom-4 inset-x-0 flex items-center justify-center space-x-6 z-20 px-4">
+          <!-- Auto-capture toggle -->
+          <label class="flex items-center space-x-2 bg-slate-900/80 text-white text-xs px-3.5 py-2 rounded-full backdrop-blur-md border border-white/20 cursor-pointer hover:bg-slate-800 transition">
+            <input type="checkbox" id="auto-capture-toggle" checked class="rounded border-slate-600 text-brand-600 focus:ring-brand-500 w-4 h-4 cursor-pointer" />
+            <span>অটো স্ন্যাপ (Auto-Snap)</span>
+          </label>
+
+          <!-- Manual Capture Button -->
+          <button id="take-photo-btn" class="w-16 h-16 rounded-full bg-white border-4 border-slate-300 hover:border-brand-500 shadow-xl flex items-center justify-center text-brand-600 hover:scale-105 active:scale-95 transition-all">
+            <div class="w-10 h-10 rounded-full bg-brand-600"></div>
+          </button>
+
+          <!-- Stop / Switch to Upload -->
+          <button id="close-camera-btn" class="p-3 rounded-full bg-slate-900/80 hover:bg-slate-800 text-white backdrop-blur-md border border-white/20 transition" title="বন্ধ করুন">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: STUDIO & EDITOR (Visible once photo is loaded/captured) -->
+    <section id="editor-section" class="hidden space-y-6">
+      
+      <!-- Top Action Alert: Face detected & background replaced -->
+      <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center space-x-3">
+          <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-blue-900">স্বয়ংক্রিয় এআই ক্রপ ও ব্যাকগ্রাউন্ড প্রস্তুত!</p>
+            <p class="text-xs text-blue-700">পাসপোর্ট ও স্ট্যাম্প সাইজ অটো তৈরি করা হয়েছে। আপনি চাইলে নিচে রঙ বা সাইজ পরিবর্তন করতে পারেন।</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button id="editor-retake-btn" class="px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold shadow-sm transition">
+            <i class="fa-solid fa-rotate-left mr-1.5"></i>নতুন ছবি নিন
+          </button>
+        </div>
+      </div>
+
+      <!-- Studio Grid: Left Side Controls, Right Side Previews -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        <!-- LEFT COLUMN: CONTROLS & SETTINGS (7 Cols) -->
+        <div class="lg:col-span-7 space-y-6">
+
+          <!-- 0. AI Smart Enhancement & Auto-Straighten Panel -->
+          <div class="bg-gradient-to-r from-indigo-50 via-purple-50 to-blue-50 rounded-2xl p-5 border border-indigo-200 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                  <i class="fa-solid fa-wand-magic-sparkles text-indigo-600"></i>
+                  <span>এআই অটো ফেস ও পেন-কাট স্টুডিও</span>
+                </h2>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <i class="fa-solid fa-check mr-1"></i>rembg u2net Active (দাগহীন অটো কাট)
+                </span>
+              </div>
+              <button id="open-api-settings-btn" class="text-xs text-indigo-700 hover:text-indigo-900 font-semibold flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg border border-indigo-200 shadow-sm transition">
+                <i class="fa-solid fa-gear"></i>
+                <span>ইঞ্জিন সেটিংস</span>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Auto-Straighten Button / Status -->
+              <button id="auto-straighten-toggle-btn" class="flex items-center justify-between p-3.5 rounded-xl border-2 border-indigo-600 bg-white shadow-sm transition hover:bg-indigo-50/50 text-left">
+                <div class="space-y-0.5">
+                  <div class="flex items-center space-x-1.5">
+                    <i class="fa-solid fa-compass-drafting text-indigo-600"></i>
+                    <span class="text-xs font-bold text-slate-800">Auto-Straighten (মাথা সোজা)</span>
+                  </div>
+                  <p id="straighten-status-text" class="text-[11px] text-slate-500">স্বয়ংক্রিয়ভাবে সোজা করা হয়েছে</p>
+                </div>
+                <span id="straighten-badge" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-100 text-indigo-800">ON</span>
+              </button>
+
+              <!-- AI HD Enhance Button -->
+              <button id="ai-enhance-toggle-btn" class="flex items-center justify-between p-3.5 rounded-xl border-2 border-indigo-600 bg-white shadow-sm transition hover:bg-indigo-50/50 text-left">
+                <div class="space-y-0.5">
+                  <div class="flex items-center space-x-1.5">
+                    <i class="fa-solid fa-sparkles text-amber-500"></i>
+                    <span class="text-xs font-bold text-slate-800">AI HD Enhance (আল্ট্রা ক্লিয়ার)</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500">শার্পনেস ও স্টুডিও লাইট বাড়ানো</p>
+                </div>
+                <span id="enhance-badge" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-100 text-indigo-800">ON</span>
+              </button>
+            </div>
+
+            <!-- Cloud AI Face Restoration (CodeFormer AI) for Blurry / Old / Damaged Photos -->
+            <div class="p-3.5 rounded-xl border border-indigo-200 bg-white/95 shadow-sm space-y-2.5">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2.5">
+                  <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-rose-500 via-purple-600 to-indigo-600 text-white flex items-center justify-center text-sm shadow-sm">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <span>এআই ফেস রিস্টোরেশন ও আনব্লার (CodeFormer AI)</span>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">100% Free Cloud AI</span>
+                    </h3>
+                    <p class="text-[11px] text-slate-500">পুরনো, ফাটা, ঝাপসা ও নষ্ট মুখের ছবি নিখুঁত এইচডি ফেস হিসেবে রিস্টোর করুন</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Auto Skin Repair & Face Build Toggle -->
+              <div class="flex items-center justify-between p-2.5 rounded-lg bg-indigo-50/80 border border-indigo-100">
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" id="auto-skin-repair-toggle" checked class="w-4 h-4 text-indigo-600 rounded accent-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+                  <div>
+                    <span class="text-xs font-bold text-slate-800 flex items-center gap-1">
+                      <i class="fa-solid fa-bandage text-rose-500"></i>
+                      <span>এআই অটো স্কিন মেরামত ও ফেস বিল্ড (Auto Skin Rebuild)</span>
+                    </span>
+                    <p class="text-[10px] text-slate-500">খোসা ওঠা বা নষ্ট স্কিন সিমেট্রি দিয়ে স্বয়ংক্রিয় পূরণ করবে</p>
+                  </div>
+                </label>
+                <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md">স্মার্ট ইনপেইন্ট</span>
+              </div>
+
+              <!-- Action Buttons: Unblur Face + Fix Broken Face AI -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                <!-- Button 1: Blurry Face Restore -->
+                <button id="cloud-restore-face-btn" type="button" title="স্বাভাবিক ঝাপসা বা লো-কোয়ালিটি ফেস শার্প ও পরিষ্কার করুন" class="py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition flex items-center justify-center gap-1.5 cursor-pointer">
+                  <i class="fa-solid fa-bolt-lightning text-amber-300"></i>
+                  <span>ঝাপসা মুখ পরিষ্কার (Unblur Face)</span>
+                </button>
+
+                <!-- Button 2: Broken Face Repair (NEW) -->
+                <button id="fix-broken-face-btn" type="button" title="কাটা, ফাটা, খামচি, খোসা ওঠা বা দাগযুক্ত ভাঙ্গা মুখ অনলাইন এআই দিয়ে মেরামত করুন" class="py-2.5 px-3 rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-amber-600 hover:from-rose-700 hover:to-amber-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition flex items-center justify-center gap-1.5 cursor-pointer">
+                  <i class="fa-solid fa-bandage text-amber-200"></i>
+                  <span>ভাঙ্গা মুখ মেরামত (Fix Broken Face AI)</span>
+                </button>
+              </div>
+              <p class="text-[10px] text-slate-500 pt-0.5 flex items-center justify-between">
+                <span>💡 <b>ভাঙ্গা মুখ বাটন:</b> কাটা, ফাটা ও খোসা ওঠা মুখের জন্য</span>
+                <span class="text-rose-600 font-bold">১০০% ফ্রি অনলাইন এআই</span>
+              </p>
+
+              <!-- Button 3: Online AI Studio Assistant (Option B) -->
+              <div class="pt-2 border-t border-indigo-100/80">
+                <button id="editor-ai-assistant-toggle-btn" type="button" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 hover:from-slate-800 hover:to-indigo-900 text-white text-xs font-bold shadow-md transition flex items-center justify-between border border-indigo-500/40 cursor-pointer">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
+                    <span>অনলাইন এআই স্টুডিও অ্যাসিস্ট্যান্ট (ড্রেস চেঞ্জ, স্যুট-টাই ও ফেস রিস্টোর)</span>
+                  </div>
+                  <i id="editor-ai-arrow-icon" class="fa-solid fa-chevron-down text-slate-300 transition-transform"></i>
+                </button>
+              </div>
+
+              <!-- Collapsible Editor AI Assistant Drawer -->
+              <div id="editor-ai-assistant-drawer" class="hidden pt-3 space-y-3 bg-slate-900/95 text-white p-4 rounded-xl border border-indigo-500/30">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-bold text-indigo-300">এআই প্রম্পট সিলেক্ট করুন:</span>
+                  </div>
+                  <button type="button" class="open-ai-portal-action text-[11px] font-bold text-amber-300 hover:text-amber-200 underline flex items-center gap-1 cursor-pointer">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    <span>এআই পোর্টাল খুলুন</span>
+                  </button>
+                </div>
+
+                <!-- Preset Chips -->
+                <div class="flex flex-wrap gap-1.5 ai-prompt-preset-list">
+                  <button type="button" data-preset="broken_face" class="ai-preset-chip active px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-indigo-600 text-white border border-indigo-400/40 transition cursor-pointer">
+                    🩹 ভাঙ্গা মুখ
+                  </button>
+                  <button type="button" data-preset="navy_suit" class="ai-preset-chip px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white/10 text-slate-200 border border-white/10 hover:bg-white/20 transition cursor-pointer">
+                    👔 নেভি স্যুট
+                  </button>
+                  <button type="button" data-preset="black_blazer" class="ai-preset-chip px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white/10 text-slate-200 border border-white/10 hover:bg-white/20 transition cursor-pointer">
+                    🧥 কালো ব্লেজার
+                  </button>
+                  <button type="button" data-preset="modest_hijab" class="ai-preset-chip px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white/10 text-slate-200 border border-white/10 hover:bg-white/20 transition cursor-pointer">
+                    🧕 হিজাব/মার্জিত
+                  </button>
+                  <button type="button" data-preset="studio_lighting" class="ai-preset-chip px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-white/10 text-slate-200 border border-white/10 hover:bg-white/20 transition cursor-pointer">
+                    💡 স্টুডিও লাইট
+                  </button>
+                </div>
+
+                <!-- Textarea -->
+                <textarea id="editor-ai-prompt-box" rows="2" class="ai-prompt-textarea w-full bg-slate-950 border border-indigo-500/40 rounded-xl p-2.5 text-[11px] text-slate-100 font-mono focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 outline-none resize-none leading-relaxed"></textarea>
+
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="copy-ai-prompt-action px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+                      <i class="fa-solid fa-copy"></i>
+                      <span>📋 প্রম্পট কপি</span>
+                    </button>
+                    <button type="button" class="copy-ingredient-photo-action px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 text-xs font-semibold border border-white/10 transition flex items-center gap-1 cursor-pointer" title="বর্তমান ছবি কপি বা ডাউনলোড করুন">
+                      <i class="fa-regular fa-image"></i>
+                      <span>📷 বর্তমান ছবি কপি/সেভ</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Editor Result Ingest Dropzone -->
+                <div class="pt-2 border-t border-white/10">
+                  <div id="editor-ai-dropzone" class="ai-ingest-dropzone border border-dashed border-indigo-400/50 hover:border-emerald-400 bg-slate-950/60 rounded-xl p-3.5 text-center cursor-pointer transition group relative">
+                    <input type="file" id="editor-ai-file-input" accept="image/*" class="ai-ingest-file-input absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                    <div class="flex items-center justify-center gap-2 text-indigo-300 group-hover:text-emerald-300 text-xs font-semibold">
+                      <i class="fa-solid fa-cloud-arrow-down text-sm"></i>
+                      <span>এআই থেকে পাওয়া নতুন ছবিটি এখানে ড্রপ করুন (অটো পাসপোর্ট রিফ্রেশ)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Edge Choke / Border Trim (Eliminates wall shadows & stains for Pen-Cut perfection) -->
+            <div class="space-y-1.5 pt-2 border-t border-indigo-100">
+              <div class="flex justify-between items-center text-xs font-semibold text-slate-700">
+                <span class="flex items-center gap-1.5 text-indigo-900">
+                  <i class="fa-solid fa-scissors text-indigo-600"></i>
+                  <span>পারফেক্ট পেন-কাট ও বর্ডার ট্রিম (Edge Choke Trim)</span>
+                </span>
+                <span id="edge-choke-val-text" class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 text-[11px] font-bold">2px</span>
+              </div>
+              <input type="range" id="adjust-edge-choke" min="0" max="5" step="1" value="2" class="w-full accent-indigo-600 cursor-pointer" />
+              <p class="text-[10px] text-slate-500">কানের পাশ বা কাঁধের ওপরের যেকোনো অবশিষ্ট ছায়া ও দাগ কেটে নিখুঁত পেন-কাট করে</p>
+            </div>
+
+            <!-- Studio Touch-up & Skin Healing Brush Toolbar -->
+            <div class="space-y-2 pt-2 border-t border-indigo-100">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <!-- AI Skin Healing Brush Button -->
+                  <button id="toggle-skin-heal-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 text-xs font-bold transition shadow-sm">
+                    <i class="fa-solid fa-wand-magic-sparkles text-emerald-600"></i>
+                    <span id="skin-heal-btn-text">✨ AI স্কিন হিলিং ব্রাশ</span>
+                  </button>
+                  <!-- Background Eraser Button -->
+                  <button id="toggle-eraser-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-sm">
+                    <i class="fa-solid fa-eraser text-rose-500"></i>
+                    <span id="eraser-btn-text">🧹 ব্যাকগ্রাউন্ড ইরেজার</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Interactive Brush Controls Bar -->
+              <div id="eraser-controls-bar" class="hidden flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-100 border border-slate-200">
+                <div class="flex items-center gap-2">
+                  <span id="brush-mode-badge" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">স্কিন হিলিং মোড</span>
+                  <span id="brush-hint-text" class="text-[11px] text-slate-600">ক্যানভাসে দাগ বা খোসা ওঠা স্থানে ক্লিক বা ব্রাশ করুন</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] font-semibold text-slate-600">সাইজ:</span>
+                  <input type="range" id="eraser-size-slider" min="6" max="45" step="1" value="16" class="w-20 accent-emerald-600 cursor-pointer" />
+                  <span id="brush-size-val-text" class="text-[10px] font-bold text-slate-500 w-5">16px</span>
+                  <button id="eraser-undo-btn" class="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-300 text-slate-700 text-xs font-semibold transition" title="Undo (Ctrl+Z)">
+                    <i class="fa-solid fa-rotate-left mr-1"></i>Undo
+                  </button>
+                  <button id="brush-close-btn" class="px-2 py-1 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold transition" title="Close Brush">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 1. Background Color Selector -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-palette text-brand-600"></i>
+                <span>অফিশিয়াল ব্যাকগ্রাউন্ড কালার (Background Color)</span>
+              </h2>
+              <span id="current-bg-name" class="text-xs font-medium text-slate-500">Official White</span>
+            </div>
+
+            <div class="grid grid-cols-3 sm:grid-cols-6 gap-3">
+              <!-- White -->
+              <button data-color="#ffffff" data-name="Official White" class="bg-color-btn active group flex flex-col items-center p-2.5 rounded-xl border-2 border-brand-600 ring-2 ring-brand-500/20 bg-slate-50 hover:bg-white transition text-center">
+                <div class="w-8 h-8 rounded-full border border-slate-300 shadow-sm bg-white mb-1.5"></div>
+                <span class="text-xs font-semibold text-slate-700">সাদা (White)</span>
+              </button>
+
+              <!-- Studio Blue -->
+              <button data-color="#2b6cb0" data-name="Studio Blue" class="bg-color-btn group flex flex-col items-center p-2.5 rounded-xl border-2 border-transparent bg-slate-50 hover:bg-white transition text-center">
+                <div class="w-8 h-8 rounded-full shadow-sm bg-[#2b6cb0] mb-1.5"></div>
+                <span class="text-xs font-semibold text-slate-700">ব্লু (Blue)</span>
+              </button>
+
+              <!-- Light Sky Blue -->
+              <button data-color="#63b3ed" data-name="Sky Blue" class="bg-color-btn group flex flex-col items-center p-2.5 rounded-xl border-2 border-transparent bg-slate-50 hover:bg-white transition text-center">
+                <div class="w-8 h-8 rounded-full shadow-sm bg-[#63b3ed] mb-1.5"></div>
+                <span class="text-xs font-semibold text-slate-700">স্কাই ব্লু</span>
+              </button>
+
+              <!-- Light Gray / Off-white -->
+              <button data-color="#f1f5f9" data-name="Light Gray" class="bg-color-btn group flex flex-col items-center p-2.5 rounded-xl border-2 border-transparent bg-slate-50 hover:bg-white transition text-center">
+                <div class="w-8 h-8 rounded-full shadow-sm bg-[#f1f5f9] border border-slate-200 mb-1.5"></div>
+                <span class="text-xs font-semibold text-slate-700">অফ-হোয়াইট</span>
+              </button>
+
+              <!-- Custom Color -->
+              <label class="bg-color-btn group flex flex-col items-center p-2.5 rounded-xl border-2 border-transparent bg-slate-50 hover:bg-white transition text-center cursor-pointer relative">
+                <input type="color" id="custom-color-picker" value="#3b82f6" class="absolute opacity-0 inset-0 cursor-pointer" />
+                <div class="w-8 h-8 rounded-full shadow-sm bg-gradient-to-tr from-rose-400 via-amber-400 to-indigo-500 mb-1.5 flex items-center justify-center text-white text-xs">
+                  <i class="fa-solid fa-eye-dropper"></i>
+                </div>
+                <span class="text-xs font-semibold text-slate-700">কাস্টম</span>
+              </label>
+
+              <!-- Original BG -->
+              <button data-color="original" data-name="Original BG" class="bg-color-btn group flex flex-col items-center p-2.5 rounded-xl border-2 border-transparent bg-slate-50 hover:bg-white transition text-center">
+                <div class="w-8 h-8 rounded-full shadow-sm bg-slate-200 flex items-center justify-center text-slate-600 text-xs mb-1.5">
+                  <i class="fa-regular fa-image"></i>
+                </div>
+                <span class="text-xs font-semibold text-slate-700">অরিজিনাল</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. Fine-Tuning Adjustments (Collapsible / Sliders) -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-brand-600"></i>
+                <span>ছবি অ্যাডজাস্টমেন্ট ও পজিশনিং (Adjustments)</span>
+              </h2>
+              <button id="reset-adjustments-btn" class="text-xs text-brand-600 hover:text-brand-800 font-semibold">
+                রিসেট করুন
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Zoom Slider -->
+              <div class="space-y-1">
+                <div class="flex justify-between text-xs font-medium text-slate-600">
+                  <span>জুম (Zoom)</span>
+                  <span id="zoom-val-text">100%</span>
+                </div>
+                <input type="range" id="adjust-zoom" min="0.8" max="1.6" step="0.02" value="1.0" class="w-full accent-brand-600 cursor-pointer" />
+              </div>
+
+              <!-- Rotation Slider -->
+              <div class="space-y-1">
+                <div class="flex justify-between text-xs font-medium text-slate-600">
+                  <span>ঘোরানো (Rotate)</span>
+                  <span id="rotate-val-text">0°</span>
+                </div>
+                <input type="range" id="adjust-rotate" min="-15" max="15" step="0.5" value="0" class="w-full accent-brand-600 cursor-pointer" />
+              </div>
+
+              <!-- Pan Vertical (Up/Down) -->
+              <div class="space-y-1">
+                <div class="flex justify-between text-xs font-medium text-slate-600">
+                  <span>উপরে / নিচে (Vertical Pan)</span>
+                  <span id="pan-y-val-text">0px</span>
+                </div>
+                <input type="range" id="adjust-pan-y" min="-80" max="80" step="1" value="0" class="w-full accent-brand-600 cursor-pointer" />
+              </div>
+
+              <!-- Pan Horizontal (Left/Right) -->
+              <div class="space-y-1">
+                <div class="flex justify-between text-xs font-medium text-slate-600">
+                  <span>বামে / ডানে (Horizontal Pan)</span>
+                  <span id="pan-x-val-text">0px</span>
+                </div>
+                <input type="range" id="adjust-pan-x" min="-60" max="60" step="1" value="0" class="w-full accent-brand-600 cursor-pointer" />
+              </div>
+
+              <!-- Brightness -->
+              <div class="space-y-1">
+                <div class="flex justify-between text-xs font-medium text-slate-600">
+                  <span>উজ্জ্বলতা (Brightness)</span>
+                  <span id="bright-val-text">100%</span>
+                </div>
+                <input type="range" id="adjust-brightness" min="70" max="135" step="1" value="100" class="w-full accent-brand-600 cursor-pointer" />
+              </div>
+
+              <!-- Contrast -->
+              <div class="space-y-1">
+                <div class="flex justify-between text-xs font-medium text-slate-600">
+                  <span>কনট্রাস্ট (Contrast)</span>
+                  <span id="contrast-val-text">100%</span>
+                </div>
+                <input type="range" id="adjust-contrast" min="70" max="135" step="1" value="100" class="w-full accent-brand-600 cursor-pointer" />
+              </div>
+
+              <!-- Sharpness Boost -->
+              <div class="space-y-1">
+                <div class="flex justify-between text-xs font-medium text-slate-600">
+                  <span>শার্পনেস (Sharpness)</span>
+                  <span id="sharpness-val-text">100%</span>
+                </div>
+                <input type="range" id="adjust-sharpness" min="0" max="250" step="5" value="100" class="w-full accent-indigo-600 cursor-pointer" />
+              </div>
+
+              <!-- Studio Lighting Boost -->
+              <div class="space-y-1">
+                <div class="flex justify-between text-xs font-medium text-slate-600">
+                  <span>স্টুডিও লাইটিং (Studio Light)</span>
+                  <span id="light-val-text">104%</span>
+                </div>
+                <input type="range" id="adjust-light" min="95" max="125" step="1" value="104" class="w-full accent-indigo-600 cursor-pointer" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Primary Export Action Buttons -->
+          <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg space-y-4">
+            <div>
+              <h3 class="text-base font-bold flex items-center gap-2">
+                <i class="fa-solid fa-print"></i>
+                <span>প্রিন্ট ও পিডিএফ ডাউনলোড অপশন</span>
+              </h3>
+              <p class="text-xs text-blue-100 mt-1">ল্যাব কোয়ালিটি ৩00 DPI প্রিন্ট শিট তৈরি করুন অথবা একক ছবি ডাউনলোড করুন</p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+              <button id="open-print-modal-btn" class="flex-1 py-3 px-5 bg-white text-brand-700 hover:bg-blue-50 font-bold rounded-xl shadow-md transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-file-pdf text-rose-600 text-lg"></i>
+                <span>মাল্টি-কপি প্রিন্ট ও PDF শিট</span>
+              </button>
+
+              <button id="quick-print-passport-btn" class="py-3 px-4 bg-blue-500/40 hover:bg-blue-500/60 text-white font-semibold rounded-xl border border-white/20 transition flex items-center space-x-2">
+                <i class="fa-solid fa-print"></i>
+                <span>সরাসরি প্রিন্ট</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: DUAL PHOTO PREVIEWS (5 Cols) -->
+        <div class="lg:col-span-5 space-y-6">
+
+          <!-- Passport Preview Card -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                  <span>পাসপোর্ট সাইজ (Passport Size)</span>
+                </h3>
+                <p class="text-xs text-slate-500">35mm x 45mm (ICAO 9303 • টপ মার্জিন ৩.৫ মিমি • হেড ৩২-৩৬ মিমি)</p>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">300 DPI</span>
+            </div>
+
+            <!-- Canvas wrapper -->
+            <div class="flex items-center justify-center p-4 bg-slate-100 rounded-xl">
+              <div class="photo-preview-wrapper bg-white p-1 rounded-sm border border-slate-300">
+                <canvas id="passport-preview-canvas" width="413" height="531" class="w-[175px] h-[225px] object-contain block"></canvas>
+              </div>
+            </div>
+
+            <!-- Single download buttons -->
+            <div class="grid grid-cols-2 gap-2 pt-2">
+              <button id="download-passport-jpg-btn" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5">
+                <i class="fa-regular fa-file-image text-brand-600"></i>
+                <span>Download JPG</span>
+              </button>
+              <button id="download-passport-png-btn" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-download text-emerald-600"></i>
+                <span>Download PNG</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Stamp Size Preview Card -->
+          <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                  <span>স্ট্যাম্প সাইজ (Stamp Size)</span>
+                </h3>
+                <p class="text-xs text-slate-500">20mm x 25mm (অফিসিয়াল স্ট্যাম্প • টপ মার্জিন ২.৫ মিমি)</p>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">300 DPI</span>
+            </div>
+
+            <!-- Canvas wrapper -->
+            <div class="flex items-center justify-center p-4 bg-slate-100 rounded-xl">
+              <div class="photo-preview-wrapper bg-white p-1 rounded-sm border border-slate-300">
+                <canvas id="stamp-preview-canvas" width="236" height="295" class="w-[120px] h-[150px] object-contain block"></canvas>
+              </div>
+            </div>
+
+            <!-- Single download buttons -->
+            <div class="grid grid-cols-2 gap-2 pt-2">
+              <button id="download-stamp-jpg-btn" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5">
+                <i class="fa-regular fa-file-image text-indigo-600"></i>
+                <span>Download JPG</span>
+              </button>
+              <button id="download-stamp-png-btn" class="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-download text-emerald-600"></i>
+                <span>Download PNG</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- FOOTER: APP DOCUMENTATION & CONTACT INFO -->
+  <footer class="bg-white border-t border-slate-200 mt-12 py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <!-- Col 1: App Overview -->
+        <div class="space-y-3">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white text-sm">
+              <i class="fa-solid fa-id-card"></i>
+            </div>
+            <h3 class="text-base font-bold text-slate-900">PhotoStudio AI</h3>
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            সরকারি ও আন্তর্জাতিক মানসম্পন্ন পাসপোর্ট (35×45mm) ও স্ট্যাম্প (20×25mm) সাইজের ছবি তৈরির একটি সম্পূর্ণ স্বয়ংক্রিয় এআই সফটওয়্যার। ফটোশপ ছাড়াই প্রফেশনাল স্টুডিও কোয়ালিটি ছবি প্রিন্ট ও ডাউনলোড করুন।
+          </p>
+          <div class="flex items-center space-x-2 text-[11px] text-emerald-600 font-semibold">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>১০০% অফলাইন প্রসেসিং ও সর্বোচ্চ প্রাইভেসি সুরক্ষা</span>
+          </div>
+        </div>
+
+        <!-- Col 2: Documentation & Features -->
+        <div class="space-y-3">
+          <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">ডকুমেন্টেশন ও সুবিধাসমূহ</h4>
+          <ul class="text-xs text-slate-600 space-y-2">
+            <li class="flex items-center space-x-2">
+              <i class="fa-solid fa-check text-brand-600 text-[10px]"></i>
+              <span><b>ICAO 9303 স্ট্যান্ডার্ড:</b> পাসপোর্ট (35x45mm) ও স্ট্যাম্প (20x25mm)</span>
+            </li>
+            <li class="flex items-center space-x-2">
+              <i class="fa-solid fa-check text-brand-600 text-[10px]"></i>
+              <span><b>অটো ফেস এলাইনমেন্ট:</b> বাঁকা মুখ স্বয়ংক্রিয়ভাবে সোজা করা</span>
+            </li>
+            <li class="flex items-center space-x-2">
+              <i class="fa-solid fa-check text-brand-600 text-[10px]"></i>
+              <span><b>পারফেক্ট কাট:</b> মাথার চুল ও কাঁধ সম্পূর্ণ অক্ষত রেখে ব্যাকগ্রাউন্ড রিমুভ</span>
+            </li>
+            <li class="flex items-center space-x-2">
+              <i class="fa-solid fa-check text-brand-600 text-[10px]"></i>
+              <span><b>মাল্টি-প্রিন্ট:</b> 4R ও A4 পেপারে ৪টি, ৮টি, ১৬টি কপি একসাথে প্রিন্ট ও PDF</span>
+            </li>
+          </ul>
+          <button id="footer-docs-btn" type="button" class="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center space-x-1 underline">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>সম্পূর্ণ ডকুমেন্টেশন ও গাইড দেখুন</span>
+          </button>
+        </div>
+
+        <!-- Col 3: Contact Us -->
+        <div class="space-y-3">
+          <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">যোগাযোগ ও সাপোর্ট (Contact Us)</h4>
+          <p class="text-xs text-slate-600">যেকোনো প্রশ্ন, কাস্টমাইজেশন বা সাপোর্টের জন্য সরাসরি যোগাযোগ করুন:</p>
+          
+          <div class="space-y-2.5">
+            <!-- WhatsApp -->
+            <a href="https://wa.me/8801737929107" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-3 p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/70 transition group">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-base shadow-sm group-hover:scale-105 transition-transform">
+                <i class="fa-brands fa-whatsapp"></i>
+              </div>
+              <div>
+                <p class="text-[11px] text-slate-500 font-medium">Contact us WhatsApp</p>
+                <p class="text-xs font-bold text-slate-900 group-hover:text-emerald-700">01737929107</p>
+              </div>
+            </a>
+
+            <!-- Facebook -->
+            <a href="https://www.facebook.com/Agpt2/" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-3 p-2.5 rounded-xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 transition group">
+              <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-sm shadow-sm group-hover:scale-105 transition-transform">
+                <i class="fa-brands fa-facebook-f"></i>
+              </div>
+              <div>
+                <p class="text-[11px] text-slate-500 font-medium">Facebook Profile</p>
+                <p class="text-xs font-bold text-slate-900 group-hover:text-blue-700">facebook.com/Agpt2</p>
+              </div>
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+        <p>© 2026 PhotoStudio AI. সর্বস্বত্ব সংরক্ষিত।</p>
+        <p>Developed with AI for Studio & Official Passport Applications</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- DOCUMENTATION & USER MANUAL MODAL -->
+  <div id="docs-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+      
+      <!-- Modal Header -->
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-xl bg-blue-100 text-brand-600 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-book-open"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">PhotoStudio AI ডকুমেন্টেশন ও ইউজার গাইড</h3>
+            <p class="text-xs text-slate-500">অ্যাপের পরিচয়, সাইজ স্পেসিফিকেশন ও ব্যবহারের নিয়মাবলী</p>
+          </div>
+        </div>
+        <button id="close-docs-modal-btn" type="button" class="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600 transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-6 overflow-y-auto space-y-6 text-slate-700 text-xs sm:text-sm leading-relaxed">
+        
+        <!-- Section 1: Overview -->
+        <div class="space-y-2">
+          <h4 class="text-sm font-bold text-slate-900 flex items-center space-x-2">
+            <span class="w-6 h-6 rounded-md bg-brand-500 text-white flex items-center justify-center text-xs font-bold">১</span>
+            <span>অ্যাপের পরিচয় ও উদ্দেশ্য (App Overview)</span>
+          </h4>
+          <p class="text-slate-600">
+            <strong>PhotoStudio AI</strong> হলো একটি প্রফেশনাল ফটো স্টুডিও সফটওয়্যার, যা সম্পূর্ণ স্বয়ংক্রিয়ভাবে যেকোনো সাধারণ ছবি বা ক্যামেরার স্ন্যাপশটকে সরকারি ও আন্তর্জাতিক স্ট্যান্ডার্ড অনুযায়ী পাসপোর্ট ও স্ট্যাম্প সাইজের ছবিতে রূপান্তর করে। এতে ফটোশপ বা গ্রাফিক্স ডিজাইনের কোনো অভিজ্ঞতার প্রয়োজন হয় না।
+          </p>
+        </div>
+
+        <!-- Section 2: Photo Specifications -->
+        <div class="space-y-2">
+          <h4 class="text-sm font-bold text-slate-900 flex items-center space-x-2">
+            <span class="w-6 h-6 rounded-md bg-brand-500 text-white flex items-center justify-center text-xs font-bold">২</span>
+            <span>ফটো সাইজ ও স্পেসিফিকেশন (Official Photo Standards)</span>
+          </h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">আন্তর্জাতিক পাসপোর্ট মাপ</span>
+              <p class="font-bold text-slate-900 text-sm">35mm x 45mm</p>
+              <ul class="text-[11px] text-slate-600 space-y-0.5">
+                <li>• পিক্সেল মাপ: 413 x 531 px (300 DPI)</li>
+                <li>• ICAO 9303 স্ট্যান্ডার্ড অনুযায়ী মাথার সাইজ ৭০-৭২%</li>
+                <li>• মাথার উপরে ১০% সেফ স্পেস (চুল কাটা যাবে না)</li>
+                <li>• নিচে কলার ও কাঁধ প্রাকৃতিকভাবে সংরক্ষিত</li>
+              </ul>
+            </div>
+            <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">বাংলাদেশ স্ট্যাম্প মাপ</span>
+              <p class="font-bold text-slate-900 text-sm">20mm x 25mm</p>
+              <ul class="text-[11px] text-slate-600 space-y-0.5">
+                <li>• পিক্সেল মাপ: 236 x 295 px (300 DPI)</li>
+                <li>• বিভিন্ন ভর্তি, ফরম ও আবেদনপত্রের জন্য উপযুক্ত</li>
+                <li>• পাসপোর্ট ছবির সাথে অটোমেটিক সিঙ্ক</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Step by Step Guide -->
+        <div class="space-y-2">
+          <h4 class="text-sm font-bold text-slate-900 flex items-center space-x-2">
+            <span class="w-6 h-6 rounded-md bg-brand-500 text-white flex items-center justify-center text-xs font-bold">৩</span>
+            <span>ধাপে ধাপে ব্যবহারের নিয়ম (How to Use)</span>
+          </h4>
+          <ol class="list-decimal list-inside space-y-1.5 text-slate-600 text-xs sm:text-sm pl-1">
+            <li><strong>ছবি দিন:</strong> 'ছবি আপলোড' ট্যাব থেকে যেকোনো ছবি সিলেক্ট করুন অথবা 'লাইভ ক্যামেরা' দিয়ে ওভালের মাঝে মুখ রেখে ফটো তুলুন।</li>
+            <li><strong>স্বয়ংক্রিয় প্রসেসিং:</strong> এআই তাৎক্ষণিকভাবে ব্যাকগ্রাউন্ড রিমুভ করবে, বাঁকা মুখ সোজা করবে এবং অফিসিয়াল মাপে ফ্রেম করবে।</li>
+            <li><strong>ব্যাকগ্রাউন্ড কালার পরিবর্তন:</strong> অফিশিয়াল সাদা, নীল, স্কাই-ব্লু বা গ্রে বাটনে চাপ দিয়ে ১ ক্লিকেই ব্যাকগ্রাউন্ড পরিবর্তন করুন।</li>
+            <li><strong>ফিনিশিং ও এনহ্যান্স:</strong> স্কিন স্মুথিং, ব্রাইটনেস ও কন্ট্রাস্ট অ্যাডজাস্ট করতে পারেন।</li>
+            <li><strong>প্রিন্ট ও ডাউনলোড:</strong> সিঙ্গেল ছবি ডাউনলোড করতে পারেন অথবা 'প্রিন্ট শিট' এ ক্লিক করে 4R বা A4 পেপারে সাজিয়ে এক ক্লিকে প্রিন্ট বা ল্যাব কোয়ালিটি PDF ডাউনলোড করতে পারেন।</li>
+          </ol>
+        </div>
+
+        <!-- Section 4: Contact Links -->
+        <div class="p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 space-y-3">
+          <h4 class="text-sm font-bold text-slate-900 flex items-center space-x-2">
+            <i class="fa-solid fa-headset text-brand-600"></i>
+            <span>সহায়তা ও যোগাযোগ (Developer Support)</span>
+          </h4>
+          <p class="text-xs text-slate-600">যেকোনো সমস্যা, প্রশ্ন বা সফটওয়্যার সংক্রান্ত পরামর্শের জন্য সরাসরি যোগাযোগ করুন:</p>
+          <div class="flex flex-wrap items-center gap-3">
+            <a href="https://wa.me/8801737929107" target="_blank" rel="noopener noreferrer" class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs flex items-center space-x-2 shadow-sm transition">
+              <i class="fa-brands fa-whatsapp text-base"></i>
+              <span>Contact us WhatsApp (01737929107)</span>
+            </a>
+            <a href="https://www.facebook.com/Agpt2/" target="_blank" rel="noopener noreferrer" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs flex items-center space-x-2 shadow-sm transition">
+              <i class="fa-brands fa-facebook-f text-base"></i>
+              <span>Facebook (facebook.com/Agpt2)</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+        <button id="close-docs-modal-footer-btn" type="button" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl transition">
+          বুঝেছি (Close)
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PRINT & PDF MODAL -->
+  <div id="print-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+      
+      <!-- Modal Header -->
+      <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-100 text-brand-600 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-copy"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">প্রিন্ট শিট ও PDF এক্সপোর্ট</h3>
+            <p class="text-xs text-slate-500">আপনার পছন্দমতো পেপার সাইজ এবং ছবির সংখ্যা সিলেক্ট করুন</p>
+          </div>
+        </div>
+        <button id="close-print-modal-btn" class="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600 transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto space-y-6 flex-1">
+        
+        <!-- Sheet Layout Selector -->
+        <div class="space-y-2">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">লেআউট পছন্দ করুন (Select Layout)</label>
+          <select id="sheet-layout-select" class="w-full p-3 rounded-xl border border-slate-300 text-sm font-semibold bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+            <option value="4r_4_passport">4x6" Photo Paper — ৪ কপি পাসপোর্ট সাইজ (4 Passport)</option>
+            <option value="4r_8_stamp">4x6" Photo Paper — ৮ কপি স্ট্যাম্প সাইজ (8 Stamp)</option>
+            <option value="a4_8_passport">A4 Paper — ৮ কপি পাসপোর্ট সাইজ (8 Passport)</option>
+            <option value="a4_12_passport">A4 Paper — ১২ কপি পাসপোর্ট সাইজ (12 Passport)</option>
+            <option value="a4_16_stamp">A4 Paper — ১৬ কপি স্ট্যাম্প সাইজ (16 Stamp)</option>
+            <option value="a4_combo">A4 Paper — কম্বো প্যাক (৪ পাসপোর্ট + ৬ স্ট্যাম্প)</option>
+          </select>
+        </div>
+
+        <!-- Cutting Border Checkbox -->
+        <div class="flex items-center space-x-2">
+          <input type="checkbox" id="sheet-cut-marks-checkbox" checked class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-slate-300 cursor-pointer" />
+          <label for="sheet-cut-marks-checkbox" class="text-xs font-medium text-slate-700 cursor-pointer">
+            কাঁচি দিয়ে কাটার জন্য হালকা বর্ডার লাইন দিন (Include cutting guide marks)
+          </label>
+        </div>
+
+        <!-- Sheet Preview Box -->
+        <div class="space-y-2">
+          <div class="flex justify-between items-center text-xs font-semibold text-slate-600">
+            <span>প্রিন্ট প্রিভিউ (Print Sheet Preview):</span>
+            <span class="text-slate-400">Scale-to-fit preview</span>
+          </div>
+          <div class="bg-slate-100 p-4 rounded-2xl flex items-center justify-center border border-slate-200 min-h-[220px]">
+            <canvas id="modal-sheet-preview-canvas" class="max-h-[300px] max-w-full shadow-lg bg-white rounded border border-slate-300"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-6 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+        <button id="modal-cancel-btn" class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold rounded-xl transition">
+          বন্ধ করুন
+        </button>
+
+        <div class="flex items-center space-x-3">
+          <button id="modal-download-sheet-btn" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold rounded-xl transition flex items-center space-x-2 shadow-sm">
+            <i class="fa-solid fa-file-image"></i>
+            <span>JPG শিট</span>
+          </button>
+
+          <button id="modal-download-pdf-btn" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-xl transition flex items-center space-x-2 shadow-sm">
+            <i class="fa-solid fa-file-pdf"></i>
+            <span>PDF ডাউনলোড</span>
+          </button>
+
+          <button id="modal-direct-print-btn" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl transition flex items-center space-x-2 shadow-md">
+            <i class="fa-solid fa-print"></i>
+            <span>সরাসরি প্রিন্ট</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FREE AI API SETTINGS MODAL -->
+  <div id="api-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-key"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">AI Background API Settings</h3>
+            <p class="text-[11px] text-slate-500">ফ্রি ক্লাউড এআই এপিআই সংযোগ করুন (ঐচ্ছিক)</p>
+          </div>
+        </div>
+        <button id="close-api-modal-btn" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600 transition">
+          <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4 text-xs">
+        <div class="space-y-2">
+          <label class="font-bold text-slate-700">এআই ব্যাকগ্রাউন্ড ইঞ্জিন পছন্দ করুন:</label>
+          <div class="space-y-2">
+            <label class="flex items-center space-x-2.5 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+              <input type="radio" name="bg_engine" value="local" id="engine-local" checked class="text-brand-600" />
+              <div>
+                <p class="font-semibold text-slate-800">বিল্ট-ইন অফলাইন এআই (ডিফল্ট - ১০০% ফ্রি)</p>
+                <p class="text-[11px] text-slate-500">কোনো কি লাগবে না, ডিফ্রিঞ্জ ফিল্টার সহ আনলিমিটেড ফ্রি</p>
+              </div>
+            </label>
+
+            <label class="flex items-center space-x-2.5 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+              <input type="radio" name="bg_engine" value="cloud" id="engine-cloud" class="text-brand-600" />
+              <div>
+                <p class="font-semibold text-slate-800">Remove.bg ক্লাউড এআই (Cloud API)</p>
+                <p class="text-[11px] text-slate-500">চুলের নিখুঁত কাটিংয়ের জন্য ফ্রি এপিআই কি ব্যবহার করুন</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div id="api-key-group" class="space-y-1.5 hidden">
+          <label class="font-semibold text-slate-700">Remove.bg API Key:</label>
+          <input type="password" id="removebg-api-key-input" placeholder="এখানে API Key পেস্ট করুন" class="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-mono outline-none focus:ring-2 focus:ring-brand-500" />
+          <p class="text-[11px] text-slate-500">
+            Remove.bg থেকে সম্পূর্ণ ফ্রিতে প্রতি মাসে ৫০টি ফ্রি ইমেজ এপিআই কি পাওয়া যায়: <a href="https://www.remove.bg/api" target="_blank" class="text-brand-600 underline">remove.bg/api</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+        <button id="cancel-api-settings-btn" class="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl text-xs">বাতিল</button>
+        <button id="save-api-settings-btn" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-xs shadow-sm">সংরক্ষণ করুন</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP AUTO-UPDATE MODAL -->
+  <div id="update-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-cloud-arrow-down"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">PhotoStudio AI অটো-আপডেট</h3>
+            <p class="text-[11px] text-slate-500">সর্বশেষ ভার্সন ও পরিবর্তনসমূহ</p>
+          </div>
+        </div>
+        <button id="close-update-modal-btn" class="w-7 h-7 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600 transition cursor-pointer">
+          <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4 text-xs">
+        <div id="update-status-box" class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-slate-600 font-medium">বর্তমান ভার্সন:</span>
+            <span id="current-ver-badge" class="font-bold text-slate-800 bg-slate-200 px-2 py-0.5 rounded">v1.2.0</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-slate-600 font-medium">সর্বশেষ রিলিজ:</span>
+            <span id="latest-ver-badge" class="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">চেক করা হচ্ছে...</span>
+          </div>
+        </div>
+
+        <div id="update-changelog-group" class="space-y-1.5 hidden">
+          <label class="font-bold text-slate-700">নতুন ফিচার ও পরিবর্তন:</label>
+          <div id="update-changelog-text" class="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100 text-slate-700 text-[11px] leading-relaxed"></div>
+        </div>
+
+        <p id="update-msg-text" class="text-[11px] text-slate-500"></p>
+      </div>
+
+      <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+        <button id="close-update-modal-footer-btn" class="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl text-xs cursor-pointer">বন্ধ করুন</button>
+        <button id="apply-update-btn" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center gap-1.5 hidden cursor-pointer">
+          <i class="fa-solid fa-bolt-lightning text-amber-300"></i>
+          <span>এক ক্লিকে আপডেট করুন</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING SPINNER OVERLAY -->
+  <div id="loading-overlay" class="processing-overlay fixed inset-0 z-50 flex flex-col items-center justify-center text-white hidden">
+    <div class="w-16 h-16 rounded-full border-4 border-blue-400 border-t-transparent animate-spin mb-4"></div>
+    <h3 class="text-base font-bold" id="loading-title">প্রসেসিং হচ্ছে...</h3>
+    <p class="text-xs text-slate-300 mt-1" id="loading-desc">এআই মডেল ছবি প্রসেস করছে, অনুগ্রহ করে অপেক্ষা করুন</p>
+  </div>
+
+  <!-- FLOATING STUDIO TOAST NOTIFICATION -->
+  <div id="studio-toast" class="fixed bottom-6 right-6 z-50 transform translate-y-12 opacity-0 pointer-events-none transition-all duration-300 max-w-sm w-full bg-slate-900/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-2xl border border-indigo-500/30 flex items-start space-x-3">
+    <div id="studio-toast-icon" class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 text-base">
+      <i class="fa-solid fa-check"></i>
+    </div>
+    <div class="flex-1">
+      <h4 id="studio-toast-title" class="text-xs font-bold text-white">সফল হয়েছে</h4>
+      <p id="studio-toast-msg" class="text-[11px] text-slate-300 mt-0.5 leading-snug">প্রম্পট ক্লিপবোর্ডে কপি হয়েছে।</p>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT MODULES -->
+  <script src="js/segmenter.js"></script>
+  <script src="js/face_crop.js"></script>
+  <script src="js/enhancer.js"></script>
+  <script src="js/eraser_tool.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/print_export.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+/* Custom Styles for Passport & Stamp Photo Studio */
+
+:root {
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Camera Oval Overlay */
+.camera-overlay-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: #0f172a;
+}
+
+.camera-guide-oval {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60%;
+  height: 75%;
+  border: 3px dashed rgba(255, 255, 255, 0.7);
+  border-radius: 50% / 55%;
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.55);
+  pointer-events: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.camera-guide-oval.aligned {
+  border-color: #10b981;
+  border-style: solid;
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.4), 0 0 25px rgba(16, 185, 129, 0.5);
+}
+
+.camera-crosshair-h {
+  position: absolute;
+  top: 40%;
+  left: 30%;
+  right: 30%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
+
+.camera-crosshair-v {
+  position: absolute;
+  top: 25%;
+  bottom: 25%;
+  left: 50%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
+
+/* Shutter flash animation */
+@keyframes flashAnimation {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.camera-flash {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  pointer-events: none;
+  z-index: 50;
+  animation: flashAnimation 0.4s ease-out forwards;
+}
+
+/* Photo Canvas & Preview */
+.photo-preview-wrapper {
+  position: relative;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+  user-select: none;
+}
+
+/* Passport Cut Guidelines Preview */
+.cut-mark {
+  position: relative;
+}
+.cut-mark::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border: 1px dashed #94a3b8;
+  pointer-events: none;
+}
+
+/* Loading Spinner Overlay */
+.processing-overlay {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+/* Print Specific Rules (@media print) */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #print-sheet-container,
+  #print-sheet-container * {
+    visibility: visible;
+  }
+  #print-sheet-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    background: transparent !important;
+  }
+  @page {
+    margin: 10mm;
+    size: auto;
+  }
+}

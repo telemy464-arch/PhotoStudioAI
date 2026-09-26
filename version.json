@@ -1,0 +1,24 @@
+{
+  "version": "1.2.0",
+  "name": "PhotoStudio AI",
+  "release_date": "2026-09-27",
+  "changelog": "Online AI Studio Assistant (Dola.com Helper), Auto Passport/Stamp Ingestion, 1-Click Auto Update",
+  "repo_url": "https://github.com/telemy464-arch/PhotoStudioAI",
+  "update_url": "https://raw.githubusercontent.com/telemy464-arch/PhotoStudioAI/main/version.json",
+  "files_to_update": [
+    "version.json",
+    "index.html",
+    "server.py",
+    "css/styles.css",
+    "js/app.js",
+    "js/camera.js",
+    "js/enhancer.js",
+    "js/eraser_tool.js",
+    "js/face_crop.js",
+    "js/print_export.js",
+    "js/segmenter.js",
+    "run_app.bat",
+    "update_app.bat",
+    "requirements.txt"
+  ]
+}
