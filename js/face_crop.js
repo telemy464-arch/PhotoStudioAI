@@ -216,10 +216,15 @@ class FaceCropper {
       const leftMost = faceMetrics[0];
       const rightMost = faceMetrics[faceMetrics.length - 1];
 
-      const leftEdge = Math.max(0, leftMost.faceCenterX - leftMost.headWidth * 0.60);
-      const rightEdge = Math.min(imgWidth, rightMost.faceCenterX + rightMost.headWidth * 0.60);
-      const combinedCenter = Math.round((leftEdge + rightEdge) / 2);
-      const combinedWidth = Math.round(rightEdge - leftEdge);
+      // Physical head edges
+      const headLeftEdge = Math.max(0, leftMost.faceCenterX - leftMost.headWidth * 0.60);
+      const headRightEdge = Math.min(imgWidth, rightMost.faceCenterX + rightMost.headWidth * 0.60);
+      const headSpan = Math.round(headRightEdge - headLeftEdge);
+
+      // Estimate natural outer shoulder span for two adults side by side:
+      // Adult shoulder reaches ~1.25x head width out from head center
+      let bodyLeftEdge = Math.max(0, Math.floor(leftMost.faceCenterX - leftMost.headWidth * 1.25));
+      let bodyRightEdge = Math.min(imgWidth, Math.ceil(rightMost.faceCenterX + rightMost.headWidth * 1.25));
 
       let finalCrownY = minCrownY;
       if (sourceCutout && (sourceCutout.getContext || (sourceCutout.width && sourceCutout.height))) {
@@ -233,17 +238,18 @@ class FaceCropper {
             sCtx.drawImage(sourceCutout, 0, 0, imgWidth, imgHeight);
           }
           const sCtx = scanCanvas.getContext('2d');
-          const minX = Math.max(0, Math.floor(leftEdge));
-          const maxX = Math.min(imgWidth - 1, Math.ceil(rightEdge));
-          const scanWidth = maxX - minX + 1;
-          const scanHeight = Math.max(1, Math.min(imgHeight, Math.floor(avgEyeY)));
-          if (scanWidth > 0 && scanHeight > 0) {
-            const imgData = sCtx.getImageData(minX, 0, scanWidth, scanHeight);
-            const data = imgData.data;
-            for (let y = 0; y < scanHeight; y++) {
+
+          // 1. Crown / hair detection (from top down to eye level across head span)
+          const minHairX = Math.max(0, Math.floor(headLeftEdge));
+          const maxHairX = Math.min(imgWidth - 1, Math.ceil(headRightEdge));
+          const hairScanW = maxHairX - minHairX + 1;
+          const hairScanH = Math.max(1, Math.min(imgHeight, Math.floor(avgEyeY)));
+          if (hairScanW > 0 && hairScanH > 0) {
+            const hData = sCtx.getImageData(minHairX, 0, hairScanW, hairScanH).data;
+            for (let y = 0; y < hairScanH; y++) {
               let solidCount = 0;
-              for (let x = 0; x < scanWidth; x++) {
-                if (data[(y * scanWidth + x) * 4 + 3] > 35) {
+              for (let x = 0; x < hairScanW; x++) {
+                if (hData[(y * hairScanW + x) * 4 + 3] > 35) {
                   solidCount++;
                 }
               }
@@ -253,11 +259,34 @@ class FaceCropper {
               }
             }
           }
+
+          // 2. Shoulder & Arm detection: scan body rows from eye level down to torso
+          const bodyStartY = Math.max(0, Math.floor(avgEyeY));
+          const bodyScanH = Math.min(imgHeight - bodyStartY, Math.floor((maxChinY - minCrownY) * 1.6));
+          if (bodyScanH > 10) {
+            const bData = sCtx.getImageData(0, bodyStartY, imgWidth, bodyScanH).data;
+            let detectedMinX = imgWidth;
+            let detectedMaxX = 0;
+            for (let y = 0; y < bodyScanH; y += 4) {
+              for (let x = 0; x < imgWidth; x += 4) {
+                if (bData[(y * imgWidth + x) * 4 + 3] > 40) {
+                  if (x < detectedMinX) detectedMinX = x;
+                  if (x > detectedMaxX) detectedMaxX = x;
+                }
+              }
+            }
+            if (detectedMaxX > detectedMinX && (detectedMaxX - detectedMinX) > (rightMost.faceCenterX - leftMost.faceCenterX)) {
+              bodyLeftEdge = Math.max(0, detectedMinX - 16);
+              bodyRightEdge = Math.min(imgWidth, detectedMaxX + 16);
+            }
+          }
         } catch (err) {
-          console.warn('Multi-face alpha scan fallback:', err);
+          console.warn('Multi-face body scan fallback:', err);
         }
       }
 
+      const combinedCenter = Math.round((bodyLeftEdge + bodyRightEdge) / 2);
+      const combinedBodyWidth = Math.round(bodyRightEdge - bodyLeftEdge);
       const avgTilt = Math.round((faceMetrics.reduce((sum, m) => sum + m.tiltAngle, 0) / faceMetrics.length) * 10) / 10;
 
       return {
@@ -266,7 +295,8 @@ class FaceCropper {
         chinY: maxChinY,
         crownY: finalCrownY,
         headHeight: Math.max(30, maxChinY - finalCrownY),
-        headWidth: combinedWidth,
+        headWidth: headSpan,
+        bodyWidth: combinedBodyWidth,
         tiltAngle: Math.abs(avgTilt) < 3.5 ? avgTilt : 0,
         isMultiFace: true,
         faceCount: faceMetrics.length,
@@ -353,9 +383,12 @@ class FaceCropper {
     let cropWidth = Math.round(cropHeight * targetAspect);
 
     // Multi-face couple/joint framing adjustments:
+    // Guarantees both persons' complete arms and shoulders are 100% visible without being cut off!
     if (metrics.isMultiFace) {
-      // Must ensure both people with their shoulders fit nicely within frame
-      const minRequiredWidth = Math.round(metrics.headWidth * 1.30);
+      const minRequiredWidth = Math.max(
+        Math.round(metrics.headWidth * 1.55),
+        Math.round((metrics.bodyWidth || metrics.headWidth * 1.65) * 1.06)
+      );
       if (cropWidth < minRequiredWidth) {
         cropWidth = minRequiredWidth;
         cropHeight = Math.round(cropWidth / targetAspect);
