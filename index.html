@@ -510,6 +510,12 @@
 
           <!-- Action Buttons -->
           <div class="flex flex-wrap items-center gap-2">
+            <!-- Toggle Unicode vs SutonnyMJ -->
+            <button type="button" id="toggle-font-encoding-btn" class="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer" title="ইউনিকোড ও SutonnyMJ (বিজয়) ফন্টের মধ্যে পরিবর্তন করুন">
+              <i class="fa-solid fa-repeat text-amber-200"></i>
+              <span id="font-toggle-btn-text">⚡ SutonnyMJ ফন্ট করুন</span>
+            </button>
+
             <!-- 1-Click A4 Print -->
             <button type="button" id="compose-print-btn" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5 cursor-pointer">
               <i class="fa-solid fa-print"></i>
@@ -519,7 +525,7 @@
             <!-- Download Word (.doc) -->
             <button type="button" id="compose-download-doc-btn" class="px-3.5 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-semibold text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer" title="মাইক্রোসফট ওয়ার্ড (.doc) ফাইল ডাউনলোড">
               <i class="fa-solid fa-file-word"></i>
-              <span>Word (.doc) ডাউনলোড</span>
+              <span id="compose-word-btn-text">Word (.doc) ডাউনলোড</span>
             </button>
 
             <!-- Copy Text -->
@@ -537,8 +543,8 @@
         </div>
 
         <!-- Formatting Ribbon for live editing -->
-        <div class="bg-slate-100 rounded-xl p-2 border border-slate-200 flex flex-wrap items-center gap-1 text-xs">
-          <span class="text-slate-500 font-bold px-2">ফরম্যাট:</span>
+        <div class="bg-slate-100 rounded-xl p-2 border border-slate-200 flex flex-wrap items-center gap-1.5 text-xs">
+          <span class="text-slate-500 font-bold px-1.5">ফরম্যাট:</span>
           <button type="button" class="format-cmd-btn px-2.5 py-1 rounded bg-white hover:bg-slate-200 text-slate-800 font-bold border border-slate-200 cursor-pointer" data-cmd="bold" title="বোল্ড (Ctrl+B)"><b>B</b></button>
           <button type="button" class="format-cmd-btn px-2.5 py-1 rounded bg-white hover:bg-slate-200 text-slate-800 italic border border-slate-200 cursor-pointer" data-cmd="italic" title="ইটালিক (Ctrl+I)"><i>I</i></button>
           <button type="button" class="format-cmd-btn px-2.5 py-1 rounded bg-white hover:bg-slate-200 text-slate-800 underline border border-slate-200 cursor-pointer" data-cmd="underline" title="আন্ডারলাইন (Ctrl+U)"><u>U</u></button>
@@ -550,6 +556,30 @@
           <span class="text-slate-300">|</span>
           <button type="button" class="format-cmd-btn px-2 py-1 rounded bg-white hover:bg-slate-200 text-slate-800 border border-slate-200 cursor-pointer" data-cmd="insertUnorderedList" title="বুলেট পয়েন্ট"><i class="fa-solid fa-list-ul"></i></button>
           <button type="button" class="format-cmd-btn px-2 py-1 rounded bg-white hover:bg-slate-200 text-slate-800 border border-slate-200 cursor-pointer" data-cmd="insertOrderedList" title="নাম্বার তালিকা"><i class="fa-solid fa-list-ol"></i></button>
+
+          <!-- Font Encoding Pills -->
+          <span class="text-slate-300">|</span>
+          <div class="inline-flex items-center p-0.5 rounded-lg bg-slate-200/90 border border-slate-300">
+            <button type="button" id="font-pill-unicode" class="px-2 py-1 rounded text-[11px] font-bold bg-white text-indigo-700 shadow-sm cursor-pointer" title="প্রমিত ইউনিকোড ফন্ট (কালপুরুষ / সোলাইমানলিপি)">
+              🔤 ইউনিকোড
+            </button>
+            <button type="button" id="font-pill-sutonny" class="px-2 py-1 rounded text-[11px] font-medium text-slate-600 hover:text-slate-900 cursor-pointer" title="সুতোন্নি এমজে বিজয় ফন্ট (দোকান ও প্রেসের জন্য)">
+              ⚡ SutonnyMJ
+            </button>
+          </div>
+
+          <!-- Font Size Selector -->
+          <span class="text-slate-300">|</span>
+          <div class="flex items-center gap-1 text-[11px] text-slate-600">
+            <span class="font-semibold">সাইজ:</span>
+            <select id="compose-font-size-select" class="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-xs text-slate-700 outline-none cursor-pointer">
+              <option value="13px">13px</option>
+              <option value="14px" selected>14px (স্ট্যান্ডার্ড)</option>
+              <option value="15px">15px</option>
+              <option value="16px">16px (বড়)</option>
+              <option value="18px">18px (হেডিং)</option>
+            </select>
+          </div>
         </div>
 
         <!-- A4 Paper Container -->
@@ -1587,6 +1617,7 @@
   <script src="js/eraser_tool.js"></script>
   <script src="js/camera.js"></script>
   <script src="js/print_export.js"></script>
+  <script src="js/bijoy_converter.js"></script>
   <script src="js/composer.js"></script>
   <script src="js/app.js"></script>
 </body>

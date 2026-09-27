@@ -1,8 +1,8 @@
 {
-  "version": "1.4.0",
+  "version": "1.4.1",
   "name": "PhotoStudio AI",
   "release_date": "2026-09-28",
-  "changelog": "Added Computer Compose (কম্পিউটার কম্পোজ) Studio with Free Gemini & Puter.js AI, multi-format file attachment (+ button), handwriting OCR, and 1-click A4 print & Word (.doc) export",
+  "changelog": "Added SutonnyMJ (সুতোন্নি এমজে - বিজয় ANSI) font engine with live Unicode ⇄ Bijoy converter, font size control, and native SutonnyMJ MS Word (.doc) export",
   "repo_url": "https://github.com/telemy464-arch/PhotoStudioAI",
   "update_url": "https://raw.githubusercontent.com/telemy464-arch/PhotoStudioAI/main/version.json",
   "files_to_update": [
@@ -10,6 +10,8 @@
     "index.html",
     "server.py",
     "css/styles.css",
+    "fonts/SutonnyMJ.ttf",
+    "js/bijoy_converter.js",
     "js/composer.js",
     "js/app.js",
     "js/camera.js",

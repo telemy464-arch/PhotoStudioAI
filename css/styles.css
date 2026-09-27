@@ -115,6 +115,30 @@ body {
   backdrop-filter: blur(4px);
 }
 
+/* SutonnyMJ (Bijoy ANSI) Font Support */
+@font-face {
+  font-family: 'SutonnyMJ';
+  src: url('../fonts/SutonnyMJ.ttf') format('truetype'),
+       local('SutonnyMJ'),
+       local('Sutonny MJ'),
+       local('Sutonny_MJ'),
+       local('SutonnyMJ-Bold');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-sutonnymj {
+  font-family: 'SutonnyMJ', 'Sutonny MJ', Arial, sans-serif !important;
+  line-height: 1.6 !important;
+  letter-spacing: normal !important;
+}
+
+.font-unicode-bangla {
+  font-family: 'SolaimanLipi', 'Kalpurush', 'Noto Sans Bengali', 'Segoe UI', system-ui, Arial, sans-serif !important;
+  line-height: 1.75 !important;
+}
+
 /* A4 Document Paper Styling (Studio Compose) */
 .a4-sheet-paper {
   background-color: #ffffff;

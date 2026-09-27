@@ -16,6 +16,8 @@
     isComposing: false,
     currentRawText: '',
     currentDocTitle: 'কম্পিউটার কম্পোজ ডকুমেন্ট',
+    fontEncoding: 'unicode', // 'unicode' | 'sutonny'
+    fontSize: '14px',
   };
 
   // DOM Elements cache
@@ -40,7 +42,13 @@
     closeSettingsBtn,
     cancelSettingsBtn,
     saveSettingsBtn,
-    geminiKeyInput;
+    geminiKeyInput,
+    toggleFontBtn,
+    fontToggleBtnText,
+    fontPillUnicode,
+    fontPillSutonny,
+    fontSizeSelect,
+    wordBtnText;
 
   // Initialize Composer Module
   function initComposer() {
@@ -60,6 +68,13 @@
     openGeminiBtn = document.getElementById('open-gemini-portal-btn');
     engineStatusPill = document.getElementById('composer-engine-status-pill');
     engineLabelEl = document.getElementById('composer-engine-label');
+
+    toggleFontBtn = document.getElementById('toggle-font-encoding-btn');
+    fontToggleBtnText = document.getElementById('font-toggle-btn-text');
+    fontPillUnicode = document.getElementById('font-pill-unicode');
+    fontPillSutonny = document.getElementById('font-pill-sutonny');
+    fontSizeSelect = document.getElementById('compose-font-size-select');
+    wordBtnText = document.getElementById('compose-word-btn-text');
 
     composerApiModal = document.getElementById('composer-api-modal');
     openSettingsBtn = document.getElementById('open-composer-settings-btn');
@@ -99,6 +114,25 @@
 
     if (copyBtn) {
       copyBtn.addEventListener('click', copyComposedText);
+    }
+
+    // Font Encoding (Unicode ⇄ SutonnyMJ) and Font Size
+    if (toggleFontBtn) {
+      toggleFontBtn.addEventListener('click', toggleFontEncoding);
+    }
+    if (fontPillUnicode) {
+      fontPillUnicode.addEventListener('click', () => setFontEncoding('unicode'));
+    }
+    if (fontPillSutonny) {
+      fontPillSutonny.addEventListener('click', () => setFontEncoding('sutonny'));
+    }
+    if (fontSizeSelect) {
+      fontSizeSelect.addEventListener('change', (e) => {
+        composerState.fontSize = e.target.value;
+        if (printableSheet) {
+          printableSheet.style.fontSize = composerState.fontSize;
+        }
+      });
     }
 
     if (openDolaBtn) {
@@ -163,6 +197,70 @@
       engineLabelEl.textContent = 'AI Engine: Puter.js (Zero-Key)';
     } else {
       engineLabelEl.textContent = 'AI Engine: Puter / Gemini Free';
+    }
+  }
+
+  // Font Encoding Toggle (Unicode ⇄ SutonnyMJ)
+  function toggleFontEncoding() {
+    const nextMode = composerState.fontEncoding === 'unicode' ? 'sutonny' : 'unicode';
+    setFontEncoding(nextMode);
+  }
+
+  function setFontEncoding(mode) {
+    if (!printableSheet) return;
+    if (composerState.fontEncoding === mode) return;
+
+    const isPlaceholder = printableSheet.querySelector('.text-slate-400') !== null;
+    const currentHtml = printableSheet.innerHTML;
+
+    if (mode === 'sutonny') {
+      if (!isPlaceholder && currentHtml && window.BanglaConverter) {
+        printableSheet.innerHTML = window.BanglaConverter.convertHtmlToBijoy(currentHtml);
+      }
+      printableSheet.classList.remove('font-unicode-bangla');
+      printableSheet.classList.add('font-sutonnymj');
+      composerState.fontEncoding = 'sutonny';
+
+      if (fontToggleBtnText) {
+        fontToggleBtnText.textContent = '🔤 ইউনিকোড ফন্ট করুন';
+      }
+      if (wordBtnText) {
+        wordBtnText.textContent = 'Word (SutonnyMJ) ডাউনলোড';
+      }
+      if (fontPillUnicode && fontPillSutonny) {
+        fontPillSutonny.className =
+          'px-2 py-1 rounded text-[11px] font-bold bg-white text-indigo-700 shadow-sm cursor-pointer';
+        fontPillUnicode.className =
+          'px-2 py-1 rounded text-[11px] font-medium text-slate-600 hover:text-slate-900 cursor-pointer';
+      }
+      showStudioToast(
+        'SutonnyMJ ফন্ট সক্রিয়',
+        'ডকুমেন্টটি সুতোন্নি এমজে (বিজয় ANSI) ফন্টে রূপান্তর করা হয়েছে। প্রিন্ট ও Word ফাইলে পারফেক্ট দেখাবে।'
+      );
+    } else {
+      if (!isPlaceholder && currentHtml && window.BanglaConverter) {
+        printableSheet.innerHTML = window.BanglaConverter.convertHtmlToUnicode(currentHtml);
+      }
+      printableSheet.classList.remove('font-sutonnymj');
+      printableSheet.classList.add('font-unicode-bangla');
+      composerState.fontEncoding = 'unicode';
+
+      if (fontToggleBtnText) {
+        fontToggleBtnText.textContent = '⚡ SutonnyMJ ফন্ট করুন';
+      }
+      if (wordBtnText) {
+        wordBtnText.textContent = 'Word (.doc) ডাউনলোড';
+      }
+      if (fontPillUnicode && fontPillSutonny) {
+        fontPillUnicode.className =
+          'px-2 py-1 rounded text-[11px] font-bold bg-white text-indigo-700 shadow-sm cursor-pointer';
+        fontPillSutonny.className =
+          'px-2 py-1 rounded text-[11px] font-medium text-slate-600 hover:text-slate-900 cursor-pointer';
+      }
+      showStudioToast(
+        'ইউনিকোড ফন্ট সক্রিয়',
+        'ডকুমেন্টটি স্ট্যান্ডার্ড প্রমিত ইউনিকোড ফন্টে রূপান্তর করা হয়েছে।'
+      );
     }
   }
 
@@ -773,7 +871,21 @@ ____________________`;
     if (docTitleEl) docTitleEl.textContent = title + ' (A4 শিট প্রিভিউ)';
 
     // Convert markdown to clean HTML
-    const formattedHtml = markdownToHtml(rawText);
+    let formattedHtml = markdownToHtml(rawText);
+
+    // Apply font encoding
+    if (composerState.fontEncoding === 'sutonny' && window.BanglaConverter) {
+      formattedHtml = window.BanglaConverter.convertHtmlToBijoy(formattedHtml);
+      printableSheet.classList.remove('font-unicode-bangla');
+      printableSheet.classList.add('font-sutonnymj');
+    } else {
+      printableSheet.classList.remove('font-sutonnymj');
+      printableSheet.classList.add('font-unicode-bangla');
+    }
+
+    if (composerState.fontSize) {
+      printableSheet.style.fontSize = composerState.fontSize;
+    }
 
     printableSheet.innerHTML = `
       <div class="document-content-wrapper space-y-3 leading-relaxed text-slate-900">
@@ -879,6 +991,11 @@ ____________________`;
 
     const contentHtml = printableSheet.innerHTML;
     const title = composerState.currentDocTitle || 'Computer_Compose_Document';
+    const isSutonny = composerState.fontEncoding === 'sutonny';
+
+    const wordFontFamily = isSutonny
+      ? "'SutonnyMJ', 'Sutonny MJ', Arial, sans-serif"
+      : "'SolaimanLipi', 'Kalpurush', 'Vrinda', 'Segoe UI', Arial, sans-serif";
 
     const wordDocHtml = `
 <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -887,17 +1004,17 @@ ____________________`;
 <title>${title}</title>
 <style>
   body {
-    font-family: 'SolaimanLipi', 'Kalpurush', 'Segoe UI', Arial, sans-serif;
+    font-family: ${wordFontFamily};
     font-size: 14pt;
-    line-height: 1.7;
+    line-height: 1.6;
     color: #000000;
   }
-  h1 { font-size: 18pt; text-align: center; margin-bottom: 12pt; font-weight: bold; }
-  h2 { font-size: 16pt; margin-top: 14pt; margin-bottom: 8pt; font-weight: bold; }
-  h3 { font-size: 14pt; margin-top: 12pt; margin-bottom: 6pt; font-weight: bold; }
-  p { margin: 0 0 10pt 0; text-align: justify; }
-  table { width: 100%; border-collapse: collapse; margin: 12pt 0; }
-  th, td { border: 1px solid #777777; padding: 6pt 8pt; font-size: 12pt; }
+  h1 { font-family: ${wordFontFamily}; font-size: 18pt; text-align: center; margin-bottom: 12pt; font-weight: bold; }
+  h2 { font-family: ${wordFontFamily}; font-size: 16pt; margin-top: 14pt; margin-bottom: 8pt; font-weight: bold; }
+  h3 { font-family: ${wordFontFamily}; font-size: 14pt; margin-top: 12pt; margin-bottom: 6pt; font-weight: bold; }
+  p { font-family: ${wordFontFamily}; margin: 0 0 10pt 0; text-align: justify; }
+  table { width: 100%; border-collapse: collapse; margin: 12pt 0; font-family: ${wordFontFamily}; }
+  th, td { border: 1px solid #777777; padding: 6pt 8pt; font-size: 12pt; font-family: ${wordFontFamily}; }
   th { background-color: #f2f2f2; font-weight: bold; }
 </style>
 </head>
@@ -910,14 +1027,20 @@ ____________________`;
       type: 'application/msword;charset=utf-8',
     });
 
+    const fileSuffix = isSutonny ? '_SutonnyMJ' : '';
     const downloadLink = document.createElement('a');
     downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = `${title.replace(/\s+/g, '_')}_${Date.now()}.doc`;
+    downloadLink.download = `${title.replace(/\s+/g, '_')}${fileSuffix}_${Date.now()}.doc`;
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);
 
-    showStudioToast('Word ফাইল প্রস্তুত', 'Microsoft Word (.doc) ফাইল সফলভাবে ডাউনলোড হয়েছে।');
+    showStudioToast(
+      isSutonny ? 'Word (SutonnyMJ) ফাইল প্রস্তুত' : 'Word ফাইল প্রস্তুত',
+      isSutonny
+        ? 'Microsoft Word (.doc) ফাইল SutonnyMJ ফন্টে ডাউনলোড হয়েছে। ওয়ার্ডে খুললে সরাসরি সুতোন্নি ফন্টে দেখাবে।'
+        : 'Microsoft Word (.doc) ফাইল সফলভাবে ডাউনলোড হয়েছে।'
+    );
   }
 
   // 3. Download Plain Text (.txt)
@@ -1046,5 +1169,7 @@ ____________________`;
     applyPreset: applyPreset,
     printDoc: printComposeDocument,
     downloadWord: downloadAsWordDoc,
+    setFontEncoding: setFontEncoding,
+    toggleFontEncoding: toggleFontEncoding,
   };
 })();
