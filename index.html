@@ -38,6 +38,9 @@
   <!-- jsPDF for vector-accurate print PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+  <!-- Puter.js Browser AI (Zero-Key AI Assistant) -->
+  <script src="https://js.puter.com/v2/"></script>
+
   <!-- Custom CSS -->
   <link rel="stylesheet" href="css/styles.css" />
 </head>
@@ -103,15 +106,19 @@
   <!-- Main Container -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-    <!-- Mode Selector Tabs (Upload vs Live Camera) -->
-    <div class="bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200 max-w-md mx-auto grid grid-cols-2 gap-1">
-      <button id="tab-upload-btn" class="flex items-center justify-center space-x-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200 bg-brand-600 text-white shadow-sm">
+    <!-- Mode Selector Tabs (Upload vs Live Camera vs Computer Compose) -->
+    <div class="bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200 max-w-xl mx-auto grid grid-cols-3 gap-1">
+      <button id="tab-upload-btn" class="flex items-center justify-center space-x-1.5 sm:space-x-2 py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 bg-brand-600 text-white shadow-sm cursor-pointer">
         <i class="fa-solid fa-cloud-arrow-up"></i>
         <span>১. ছবি আপলোড</span>
       </button>
-      <button id="tab-camera-btn" class="flex items-center justify-center space-x-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+      <button id="tab-camera-btn" class="flex items-center justify-center space-x-1.5 sm:space-x-2 py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer">
         <i class="fa-solid fa-camera"></i>
         <span>২. লাইভ ক্যামেরা</span>
+      </button>
+      <button id="tab-compose-btn" class="flex items-center justify-center space-x-1.5 sm:space-x-2 py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer">
+        <i class="fa-solid fa-file-pen text-indigo-500"></i>
+        <span>৩. কম্পিউটার কম্পোজ</span>
       </button>
     </div>
 
@@ -347,6 +354,218 @@
           </button>
         </div>
       </div>
+    </section>
+
+    <!-- SECTION 4: COMPUTER COMPOSE SECTION -->
+    <section id="compose-section" class="hidden space-y-6 max-w-5xl mx-auto">
+      
+      <!-- Header Banner -->
+      <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-7 text-white border border-indigo-500/30 shadow-xl relative overflow-hidden">
+        <!-- Ambient Glow -->
+        <div class="absolute -right-20 -top-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-20 -bottom-20 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/10">
+          <div class="flex items-center space-x-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 text-xl">
+              <i class="fa-solid fa-file-pen"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-lg sm:text-xl font-bold text-white tracking-wide">কম্পিউটার কম্পোজ ও স্টুডিও অ্যাসিস্ট্যান্ট</h2>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">AI Document Studio</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1">
+                ছুটির দরখাস্ত, চাকরির আবেদন, পূর্ণাঙ্গ জীবনবৃত্তান্ত (CV), চুক্তিপত্র বা ছবি/হাতের লেখা দেখে নির্ভুল A4 কম্পোজ
+              </p>
+            </div>
+          </div>
+
+          <!-- Quick AI Portal & Engine Buttons -->
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" id="open-composer-settings-btn" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-gear text-amber-300"></i>
+              <span>এআই সেটিংস / API Key</span>
+            </button>
+            <button type="button" id="open-dola-portal-btn" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-md transition flex items-center gap-1.5 cursor-pointer" title="Dola.com এআই পোর্টাল ওপেন করুন">
+              <i class="fa-solid fa-comments"></i>
+              <span>Dola.com</span>
+            </button>
+            <button type="button" id="open-gemini-portal-btn" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md transition flex items-center gap-1.5 cursor-pointer" title="Google Gemini ওয়েব ওপেন করুন">
+              <i class="fa-solid fa-sparkles text-amber-300"></i>
+              <span>Gemini Web</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Studio Preset Chips (১ ক্লিকে প্রম্পট পূরণ) -->
+        <div class="relative z-10 pt-4 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-200 flex items-center gap-1.5">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
+              <span>জনপ্রিয় স্টুডিও প্রিসেট (১ ক্লিকে পূরণ করুন):</span>
+            </span>
+            <span class="text-[11px] text-slate-400">ক্লিক করলেই প্রম্পট বসে যাবে</span>
+          </div>
+          <div class="flex flex-wrap gap-2" id="composer-preset-chips">
+            <button type="button" data-preset="leave_app" class="composer-chip px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-200 border border-white/10 transition cursor-pointer">
+              📝 ছুটির দরখাস্ত (Leave App)
+            </button>
+            <button type="button" data-preset="job_app" class="composer-chip px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-200 border border-white/10 transition cursor-pointer">
+              💼 চাকরির আবেদনপত্র
+            </button>
+            <button type="button" data-preset="biodata_cv" class="composer-chip px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-200 border border-white/10 transition cursor-pointer">
+              📄 পূর্ণাঙ্গ জীবনবৃত্তান্ত (CV / বায়োডাটা)
+            </button>
+            <button type="button" data-preset="rent_agree" class="composer-chip px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-200 border border-white/10 transition cursor-pointer">
+              📜 বাসা ভাড়ার চুক্তিপত্র
+            </button>
+            <button type="button" data-preset="certificate" class="composer-chip px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-200 border border-white/10 transition cursor-pointer">
+              🏢 অভিজ্ঞতার প্রত্যয়নপত্র
+            </button>
+            <button type="button" data-preset="ocr_handwriting" class="composer-chip px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-200 border border-white/10 transition cursor-pointer">
+              🔍 ছবি বা হাতের লেখা দেখে টাইপ
+            </button>
+            <button type="button" data-preset="translation" class="composer-chip px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 text-slate-200 border border-white/10 transition cursor-pointer">
+              🌐 ইংরেজি থেকে বাংলা অনুবাদ
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Input Card (Height ~1", + Button on bottom left, Submit in center) -->
+      <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+        
+        <!-- Top label & Clear button -->
+        <div class="flex items-center justify-between">
+          <label for="compose-prompt-input" class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-keyboard text-brand-600"></i>
+            <span>আপনার কাজের বিবরণ বা প্রম্পট লিখুন:</span>
+          </label>
+          <button type="button" id="compose-clear-btn" class="text-xs text-slate-400 hover:text-rose-600 transition flex items-center gap-1 cursor-pointer">
+            <i class="fa-solid fa-trash-can"></i>
+            <span>মুছে ফেলুন</span>
+          </button>
+        </div>
+
+        <!-- Input Box (Starting height ~1" / 64px, responsive width) -->
+        <div class="relative w-full rounded-2xl border-2 border-slate-300 focus-within:border-brand-500 transition-all bg-slate-50/50 focus-within:bg-white">
+          <textarea id="compose-prompt-input" rows="2" class="w-full min-h-[64px] max-h-[220px] p-3.5 sm:p-4 text-xs sm:text-sm text-slate-800 placeholder-slate-400 bg-transparent resize-y outline-none leading-relaxed" placeholder="এখানে লিখুন বা নির্দেশ দিন... (যেমন: ৩ দিনের ছুটির আবেদনপত্র, বা স্কুলের সহকারী শিক্ষক পদের চাকরির আবেদন, অথবা জীবনবৃত্তান্ত/CV, বা নিচের '+' বাটনে ছবি/ডকুমেন্ট ফাইল দিন)"></textarea>
+
+          <!-- Attachment Preview Container (Chips for attached files) -->
+          <div id="compose-attachments-tray" class="hidden px-3.5 pb-2.5 flex flex-wrap gap-2 items-center border-t border-slate-100 pt-2">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Bottom Controls Bar: Left has '+', Middle has Submit Button, Right has Engine Badge -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-1">
+          
+          <!-- LEFT: Custom + Button for Files (txt, image, pdf, doc, any file) -->
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-start">
+            <label for="compose-file-input" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-indigo-300 hover:border-indigo-600 bg-indigo-50/50 hover:bg-indigo-100/50 text-indigo-700 text-xs sm:text-sm font-bold cursor-pointer transition shadow-sm group">
+              <div class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs group-hover:scale-110 transition">
+                <i class="fa-solid fa-plus"></i>
+              </div>
+              <span>ফাইল যোগ করুন (+)</span>
+            </label>
+            <input type="file" id="compose-file-input" multiple accept="image/*,.txt,.pdf,.doc,.docx" class="hidden" />
+            <span class="text-[11px] text-slate-500 hidden md:inline">ছবি, টেক্সট বা PDF</span>
+          </div>
+
+          <!-- CENTER / MIDDLE: Prominent Submit Button -->
+          <div class="flex items-center justify-center w-full sm:w-auto">
+            <button type="button" id="compose-submit-btn" class="w-full sm:w-auto px-8 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 via-brand-600 to-purple-600 hover:from-indigo-700 hover:via-brand-700 hover:to-purple-700 text-white font-bold text-sm sm:text-base shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-95 transition flex items-center justify-center gap-2.5 cursor-pointer">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-300 text-base sm:text-lg"></i>
+              <span>কম্পোজ করুন (Submit)</span>
+            </button>
+          </div>
+
+          <!-- RIGHT: Active AI Engine Status Badge -->
+          <div class="flex items-center justify-end w-full sm:w-auto text-right">
+            <div id="composer-engine-status-pill" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-medium cursor-pointer hover:bg-slate-200 transition" title="এআই ইঞ্জিন পরিবর্তন করতে ক্লিক করুন">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span id="composer-engine-label">AI Engine: Puter / Gemini Free</span>
+              <i class="fa-solid fa-circle-info text-slate-400 text-[10px]"></i>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- A4 Document Result Container -->
+      <div id="compose-result-container" class="space-y-4">
+        
+        <!-- Top Action Toolbar -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold">
+              <i class="fa-solid fa-file-lines"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900" id="compose-doc-title">স্টুডিও A4 ডকুমেন্ট প্রিভিউ</h3>
+              <p class="text-[11px] text-slate-500">সরাসরি নিচের পেজে ক্লিক করে যেকোনো লাইন বা বানান এডিট করতে পারবেন</p>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- 1-Click A4 Print -->
+            <button type="button" id="compose-print-btn" class="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-print"></i>
+              <span>A4 সরাসরি প্রিন্ট করুন</span>
+            </button>
+
+            <!-- Download Word (.doc) -->
+            <button type="button" id="compose-download-doc-btn" class="px-3.5 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-semibold text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer" title="মাইক্রোসফট ওয়ার্ড (.doc) ফাইল ডাউনলোড">
+              <i class="fa-solid fa-file-word"></i>
+              <span>Word (.doc) ডাউনলোড</span>
+            </button>
+
+            <!-- Copy Text -->
+            <button type="button" id="compose-copy-btn" class="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-copy"></i>
+              <span>কপি করুন</span>
+            </button>
+
+            <!-- Download Text (.txt) -->
+            <button type="button" id="compose-download-txt-btn" class="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-200 transition flex items-center gap-1.5 cursor-pointer" title="সাধারণ টেক্সট (.txt) ডাউনলোড">
+              <i class="fa-solid fa-file-arrow-down"></i>
+              <span>.txt</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Formatting Ribbon for live editing -->
+        <div class="bg-slate-100 rounded-xl p-2 border border-slate-200 flex flex-wrap items-center gap-1 text-xs">
+          <span class="text-slate-500 font-bold px-2">ফরম্যাট:</span>
+          <button type="button" class="format-cmd-btn px-2.5 py-1 rounded bg-white hover:bg-slate-200 text-slate-800 font-bold border border-slate-200 cursor-pointer" data-cmd="bold" title="বোল্ড (Ctrl+B)"><b>B</b></button>
+          <button type="button" class="format-cmd-btn px-2.5 py-1 rounded bg-white hover:bg-slate-200 text-slate-800 italic border border-slate-200 cursor-pointer" data-cmd="italic" title="ইটালিক (Ctrl+I)"><i>I</i></button>
+          <button type="button" class="format-cmd-btn px-2.5 py-1 rounded bg-white hover:bg-slate-200 text-slate-800 underline border border-slate-200 cursor-pointer" data-cmd="underline" title="আন্ডারলাইন (Ctrl+U)"><u>U</u></button>
+          <span class="text-slate-300">|</span>
+          <button type="button" class="format-cmd-btn px-2 py-1 rounded bg-white hover:bg-slate-200 text-slate-800 border border-slate-200 cursor-pointer" data-cmd="justifyLeft" title="বামে সাজান"><i class="fa-solid fa-align-left"></i></button>
+          <button type="button" class="format-cmd-btn px-2 py-1 rounded bg-white hover:bg-slate-200 text-slate-800 border border-slate-200 cursor-pointer" data-cmd="justifyCenter" title="মাঝে সাজান"><i class="fa-solid fa-align-center"></i></button>
+          <button type="button" class="format-cmd-btn px-2 py-1 rounded bg-white hover:bg-slate-200 text-slate-800 border border-slate-200 cursor-pointer" data-cmd="justifyRight" title="ডানে সাজান"><i class="fa-solid fa-align-right"></i></button>
+          <button type="button" class="format-cmd-btn px-2 py-1 rounded bg-white hover:bg-slate-200 text-slate-800 border border-slate-200 cursor-pointer" data-cmd="justifyFull" title="উভয় পাশে সমান (Justify)"><i class="fa-solid fa-align-justify"></i></button>
+          <span class="text-slate-300">|</span>
+          <button type="button" class="format-cmd-btn px-2 py-1 rounded bg-white hover:bg-slate-200 text-slate-800 border border-slate-200 cursor-pointer" data-cmd="insertUnorderedList" title="বুলেট পয়েন্ট"><i class="fa-solid fa-list-ul"></i></button>
+          <button type="button" class="format-cmd-btn px-2 py-1 rounded bg-white hover:bg-slate-200 text-slate-800 border border-slate-200 cursor-pointer" data-cmd="insertOrderedList" title="নাম্বার তালিকা"><i class="fa-solid fa-list-ol"></i></button>
+        </div>
+
+        <!-- A4 Paper Container -->
+        <div class="flex justify-center p-2 sm:p-6 bg-slate-200/70 rounded-3xl overflow-x-auto">
+          <div id="compose-printable-sheet" class="a4-sheet-paper w-full max-w-[794px] min-h-[1123px] bg-white p-8 sm:p-14 shadow-2xl rounded-sm border border-slate-300 text-slate-900 outline-none transition-all" contenteditable="true" spellcheck="false">
+            <!-- Initial Document Placeholder -->
+            <div class="text-center py-20 text-slate-400 space-y-3">
+              <i class="fa-solid fa-file-pen text-5xl text-indigo-200"></i>
+              <p class="text-base font-medium">উপরে আপনার প্রম্পট লিখুন অথবা ছবি/ফাইল দিয়ে "কম্পোজ করুন" বাটনে চাপ দিন</p>
+              <p class="text-xs text-slate-400">এআই মুহূর্তের মধ্যে স্ট্যান্ডার্ড A4 ফরম্যাটে ডকুমেন্ট সাজিয়ে এখানে উপস্থাপন করবে</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
     </section>
 
     <!-- SECTION 3: STUDIO & EDITOR (Visible once photo is loaded/captured) -->
@@ -1270,6 +1489,79 @@
     </div>
   </div>
 
+  <!-- COMPOSER AI SETTINGS MODAL -->
+  <div id="composer-api-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+      <!-- Header -->
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-indigo-50 to-purple-50">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-sm shadow-md">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-slate-900">কম্পিউটার কম্পোজ এআই ইঞ্জিন সেটিংস</h3>
+            <p class="text-[11px] text-slate-500">ফ্রি গুগল জেমিনাই ও ক্লাউড ইঞ্জিন পরিচালনা</p>
+          </div>
+        </div>
+        <button id="close-composer-api-modal-btn" class="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600 transition cursor-pointer">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4 text-xs">
+        <!-- Engine Options -->
+        <div class="space-y-2.5">
+          <label class="font-bold text-slate-800 text-sm">এআই ইঞ্জিন নির্বাচন করুন:</label>
+          
+          <label class="flex items-start space-x-3 p-3.5 rounded-2xl border-2 border-indigo-500 bg-indigo-50/40 cursor-pointer transition">
+            <input type="radio" name="composer_engine" value="auto" checked class="mt-1 text-indigo-600 focus:ring-indigo-500" />
+            <div class="space-y-1">
+              <p class="font-bold text-slate-900 text-xs">স্মার্ট অটো মোড (সুপারিশকৃত)</p>
+              <p class="text-[11px] text-slate-600">Gemini Key থাকলে Gemini ব্যবহার করবে, না থাকলে Puter.js বা অফলাইন টেমপ্লেট দিয়ে নিখুঁত রেজাল্ট দেবে।</p>
+            </div>
+          </label>
+
+          <label class="flex items-start space-x-3 p-3.5 rounded-2xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+            <input type="radio" name="composer_engine" value="gemini" class="mt-1 text-indigo-600 focus:ring-indigo-500" />
+            <div class="space-y-1">
+              <p class="font-bold text-slate-900 text-xs">Google Gemini Free API (অফিসিয়াল সুপারফাস্ট)</p>
+              <p class="text-[11px] text-slate-600">হাতের লেখা ও ছবি নিখুঁতভাবে পড়ে ডকুমেন্ট বানাতে সেরা। ১০০% আজীবন ফ্রি।</p>
+            </div>
+          </label>
+
+          <label class="flex items-start space-x-3 p-3.5 rounded-2xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+            <input type="radio" name="composer_engine" value="puter" class="mt-1 text-indigo-600 focus:ring-indigo-500" />
+            <div class="space-y-1">
+              <p class="font-bold text-slate-900 text-xs">Puter.js ক্লাউড এআই (কোনো Key লাগবে না)</p>
+              <p class="text-[11px] text-slate-600">সরাসরি ব্রাউজার ভিত্তিক এআই। অ্যাকাউন্ট বা এপিআই কি ছাড়াই কাজ করে।</p>
+            </div>
+          </label>
+        </div>
+
+        <!-- Gemini API Key Input -->
+        <div class="space-y-2 pt-2 border-t border-slate-100">
+          <div class="flex items-center justify-between">
+            <label for="composer-gemini-key-input" class="font-bold text-slate-800">Google Gemini API Key (ঐচ্ছিক):</label>
+            <a href="https://aistudio.google.com/apikey" target="_blank" class="text-[11px] text-brand-600 hover:underline flex items-center gap-1 font-semibold">
+              <span>ফ্রি কি নিন (Get Free Key)</span>
+              <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+            </a>
+          </div>
+          <input type="password" id="composer-gemini-key-input" placeholder="AIzaSy..." class="w-full p-3 rounded-xl border border-slate-300 font-mono text-xs outline-none focus:ring-2 focus:ring-brand-500 bg-slate-50 focus:bg-white" />
+          <p class="text-[11px] text-slate-500 leading-relaxed">
+            💡 <a href="https://aistudio.google.com/apikey" target="_blank" class="text-brand-600 underline">aistudio.google.com/apikey</a> এ গিয়ে গুগল অ্যাকাউন্ট দিয়ে ১ ক্লিকে ফ্রি কি কপি করে এখানে দিয়ে দিন। কোনো কার্ড লাগে না!
+          </p>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
+        <button id="cancel-composer-api-btn" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl text-xs cursor-pointer">বাতিল</button>
+        <button id="save-composer-api-btn" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md transition cursor-pointer">সংরক্ষণ করুন</button>
+      </div>
+    </div>
+  </div>
+
   <!-- LOADING SPINNER OVERLAY -->
   <div id="loading-overlay" class="processing-overlay fixed inset-0 z-50 flex flex-col items-center justify-center text-white hidden">
     <div class="w-16 h-16 rounded-full border-4 border-blue-400 border-t-transparent animate-spin mb-4"></div>
@@ -1295,6 +1587,7 @@
   <script src="js/eraser_tool.js"></script>
   <script src="js/camera.js"></script>
   <script src="js/print_export.js"></script>
+  <script src="js/composer.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

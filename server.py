@@ -250,6 +250,92 @@ def api_apply_update():
             'error': f'আপডেট ডাউনলোড ব্যর্থ হয়েছে: {str(e)}'
         }), 500
 
+@app.route('/api/ai-compose', methods=['POST'])
+def ai_compose():
+    """
+    AI Computer Compose & Document Generation API
+    Accepts prompt, optional images (base64 or files), and optional Gemini API key.
+    Calls official Google Gemini endpoint with models (gemini-2.5-flash, gemini-2.0-flash, gemini-1.5-flash).
+    """
+    try:
+        import urllib.request
+        import json
+        import base64
+
+        data = request.get_json(silent=True) or {}
+        prompt = data.get('prompt') or request.form.get('prompt') or ''
+        api_key = data.get('api_key') or request.form.get('api_key') or os.environ.get('GEMINI_API_KEY') or ''
+        images = data.get('images') or []
+
+        if not prompt and not images:
+            return jsonify({'success': False, 'error': 'প্রম্পট অথবা ফাইল প্রয়োজন'}), 400
+
+        if not api_key:
+            return jsonify({
+                'success': False,
+                'error': 'Gemini API Key পাওয়া যায়নি। দয়া করে সেটিংস থেকে বিনামূল্যে Gemini API Key সেট করুন।'
+            }), 400
+
+        system_instruction = (
+            "You are an elite, highly professional Bengali Computer Studio Composer and Document Specialist "
+            "(কম্পিউটার দোকান ও স্টুডিও কম্পোজার). "
+            "Your task is to produce 100% complete, formal documents in standard Bangladeshi official format (প্রমিত বাংলা). "
+            "Output ONLY the final document with clean formatting ready for A4 printing: "
+            "proper date, recipient (বরাবর), subject (বিষয়), salutation (জনাব/মহোদয়), body paragraphs, and signature blocks. "
+            "If images or handwriting are attached, transcribe and format the text accurately with correct Bengali spelling. "
+            "Do NOT include conversational filler like 'Here is your document:'. Output only the ready-to-print document text."
+        )
+
+        parts = [{"text": f"{system_instruction}\n\n[User Request]:\n{prompt}"}]
+
+        for img in images:
+            b64 = img.get('base64', '')
+            mime = img.get('type', 'image/jpeg')
+            if b64:
+                parts.append({
+                    "inline_data": {
+                        "mime_type": mime,
+                        "data": b64
+                    }
+                })
+
+        payload = {
+            "contents": [{"parts": parts}],
+            "generationConfig": {
+                "temperature": 0.2,
+                "maxOutputTokens": 2500
+            }
+        }
+
+        models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']
+        last_error = None
+
+        for model in models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key.strip()}"
+            try:
+                req_data = json.dumps(payload).encode('utf-8')
+                req = urllib.request.Request(
+                    url,
+                    data=req_data,
+                    headers={'Content-Type': 'application/json'}
+                )
+                with urllib.request.urlopen(req, timeout=30) as res:
+                    res_body = json.loads(res.read().decode('utf-8'))
+                    candidates = res_body.get('candidates', [])
+                    if candidates:
+                        parts_out = candidates[0].get('content', {}).get('parts', [])
+                        text_out = "\n".join([p.get('text', '') for p in parts_out if 'text' in p])
+                        if text_out.strip():
+                            return jsonify({'success': True, 'content': text_out})
+            except Exception as e:
+                last_error = str(e)
+                print(f"[!] Compose model {model} attempt error: {e}", flush=True)
+
+        return jsonify({'success': False, 'error': f'Gemini API কল ব্যর্থ হয়েছে: {last_error}'}), 502
+    except Exception as e:
+        print(f"[!] ai_compose exception: {e}", flush=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/remove-bg', methods=['POST'])
 def remove_bg():
     file = request.files.get('image')

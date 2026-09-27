@@ -35,9 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
   const tabUploadBtn = document.getElementById('tab-upload-btn');
   const tabCameraBtn = document.getElementById('tab-camera-btn');
+  const tabComposeBtn = document.getElementById('tab-compose-btn');
   const uploadSection = document.getElementById('upload-section');
   const cameraSection = document.getElementById('camera-section');
   const editorSection = document.getElementById('editor-section');
+  const composeSection = document.getElementById('compose-section');
   const photoFileInput = document.getElementById('photo-file-input');
   const dropZone = document.getElementById('drop-zone');
   const loadSampleBtn = document.getElementById('load-sample-btn');
@@ -163,31 +165,44 @@ document.addEventListener('DOMContentLoaded', () => {
   // -------------------------------------------------------------
   // Mode Switching
   // -------------------------------------------------------------
+  const TAB_ACTIVE_CLASS = 'flex items-center justify-center space-x-1.5 sm:space-x-2 py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 bg-brand-600 text-white shadow-sm cursor-pointer';
+  const TAB_INACTIVE_CLASS = 'flex items-center justify-center space-x-1.5 sm:space-x-2 py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer';
+
   function setMode(mode) {
     state.currentMode = mode;
 
+    // Reset tabs
+    if (tabUploadBtn) tabUploadBtn.className = TAB_INACTIVE_CLASS;
+    if (tabCameraBtn) tabCameraBtn.className = TAB_INACTIVE_CLASS;
+    if (tabComposeBtn) tabComposeBtn.className = TAB_INACTIVE_CLASS;
+
+    // Hide all sections first
+    if (uploadSection) uploadSection.classList.add('hidden');
+    if (cameraSection) cameraSection.classList.add('hidden');
+    if (editorSection) editorSection.classList.add('hidden');
+    if (composeSection) composeSection.classList.add('hidden');
+
     if (mode === 'upload') {
-      tabUploadBtn.className = 'flex items-center justify-center space-x-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200 bg-brand-600 text-white shadow-sm';
-      tabCameraBtn.className = 'flex items-center justify-center space-x-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100';
-      uploadSection.classList.remove('hidden');
-      cameraSection.classList.add('hidden');
-      window.cameraManager.stopCamera();
+      if (tabUploadBtn) tabUploadBtn.className = TAB_ACTIVE_CLASS;
+      if (uploadSection) uploadSection.classList.remove('hidden');
+      window.cameraManager?.stopCamera();
     } else if (mode === 'camera') {
-      tabCameraBtn.className = 'flex items-center justify-center space-x-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200 bg-brand-600 text-white shadow-sm';
-      tabUploadBtn.className = 'flex items-center justify-center space-x-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100';
-      cameraSection.classList.remove('hidden');
-      uploadSection.classList.add('hidden');
+      if (tabCameraBtn) tabCameraBtn.className = TAB_ACTIVE_CLASS;
+      if (cameraSection) cameraSection.classList.remove('hidden');
       startLiveCamera();
+    } else if (mode === 'compose') {
+      if (tabComposeBtn) tabComposeBtn.className = TAB_ACTIVE_CLASS;
+      if (composeSection) composeSection.classList.remove('hidden');
+      window.cameraManager?.stopCamera();
     } else if (mode === 'editor') {
-      uploadSection.classList.add('hidden');
-      cameraSection.classList.add('hidden');
-      editorSection.classList.remove('hidden');
-      window.cameraManager.stopCamera();
+      if (editorSection) editorSection.classList.remove('hidden');
+      window.cameraManager?.stopCamera();
     }
   }
 
-  tabUploadBtn.addEventListener('click', () => setMode('upload'));
-  tabCameraBtn.addEventListener('click', () => setMode('camera'));
+  if (tabUploadBtn) tabUploadBtn.addEventListener('click', () => setMode('upload'));
+  if (tabCameraBtn) tabCameraBtn.addEventListener('click', () => setMode('camera'));
+  if (tabComposeBtn) tabComposeBtn.addEventListener('click', () => setMode('compose'));
 
   // -------------------------------------------------------------
   // Camera Setup & Tracking Callbacks

@@ -115,16 +115,70 @@ body {
   backdrop-filter: blur(4px);
 }
 
+/* A4 Document Paper Styling (Studio Compose) */
+.a4-sheet-paper {
+  background-color: #ffffff;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  font-family: 'SolaimanLipi', 'Kalpurush', 'Noto Sans Bengali', 'Segoe UI', system-ui, Arial, sans-serif;
+  line-height: 1.75;
+  color: #1e293b;
+  font-size: 14px;
+}
+.a4-sheet-paper h1, .a4-sheet-paper h2, .a4-sheet-paper h3 {
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+.a4-sheet-paper p {
+  margin-bottom: 0.75rem;
+}
+.a4-sheet-paper table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+.a4-sheet-paper th, .a4-sheet-paper td {
+  border: 1px solid #94a3b8;
+  padding: 6px 10px;
+  text-align: left;
+  font-size: 13px;
+}
+.a4-sheet-paper th {
+  background-color: #f1f5f9;
+  font-weight: 600;
+}
+
 /* Print Specific Rules (@media print) */
 @media print {
   body * {
     visibility: hidden;
   }
-  #print-sheet-container,
-  #print-sheet-container * {
+  
+  /* Compose Document Print Mode */
+  body.printing-compose #compose-printable-sheet,
+  body.printing-compose #compose-printable-sheet * {
+    visibility: visible !important;
+  }
+  body.printing-compose #compose-printable-sheet {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    margin: 0 !important;
+    padding: 15mm 20mm !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* Photo Sheet Print Mode */
+  body:not(.printing-compose) #print-sheet-container,
+  body:not(.printing-compose) #print-sheet-container * {
     visibility: visible;
   }
-  #print-sheet-container {
+  body:not(.printing-compose) #print-sheet-container {
     position: absolute;
     left: 0;
     top: 0;
@@ -133,8 +187,10 @@ body {
     width: 100%;
     background: transparent !important;
   }
+
   @page {
     margin: 10mm;
     size: auto;
   }
 }
+
